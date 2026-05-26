@@ -1,6 +1,6 @@
 # PkiroPanel
 
-Multi-node proxy management panel with WireGuard tunnel support.
+基於 [gost](https://github.com/go-gost/gost)、[WireGuard](https://www.wireguard.com/)、[sing-box](https://github.com/SagiNet/sing-box) 等開源項目構建的轉發與節點管理面板。
 
 ## Features
 
