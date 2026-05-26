@@ -15,7 +15,7 @@
   --radius-sm:14px;--radius:20px;--radius-lg:24px;--radius-pill:50px
 }
 body{font-family:'Microsoft YaHei','Segoe UI','Microsoft JhengHei',system-ui,sans-serif;background:rgba(15,15,26,0.5);color:var(--text);min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:url('https://www.loliapi.com/acg/') center/cover no-repeat,linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);filter:blur(var(--bg-blur)) brightness(var(--bg-brightness));transition:background-image 30s}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:url('https://api.sretna.cn/api/anime.php') center/cover no-repeat,linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);filter:blur(var(--bg-blur)) brightness(var(--bg-brightness));transition:background-image 30s}
 
 /* ── 導覽列 (懸浮膠囊) ── */
 header{margin:16px 24px 0;padding:14px 32px;display:flex;align-items:center;justify-content:space-between;background:rgba(var(--card-rgb),var(--card-opacity));border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-pill);box-shadow:0 8px 32px rgba(0,0,0,.35)}
@@ -659,7 +659,7 @@ const SETTINGS_KEYS = [
   {id:'bgBright', css:'--bg-brightness', label:'brightVal', suffix:''},
   {id:'cardOpacity', css:'--card-opacity', label:'opacityVal', suffix:''},
 ];
-const DEFAULT_BG = "url('https://www.loliapi.com/acg/') center/cover no-repeat,linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)";
+const DEFAULT_BG = "url('https://api.sretna.cn/api/anime.php') center/cover no-repeat,linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)";
 
 function getBgUrl() {
   const custom = localStorage.getItem('realm-bg-url');
