@@ -35,27 +35,20 @@ docker compose up -d
 
 ### 代理端（節點）
 
-在面板中新增節點後，於對應伺服器上執行安裝指令。**不同節點類型安裝的組件不同：**
-
-| 節點類型 | 用途 | 預裝組件 | 安裝指令 |
-|----------|------|----------|----------|
-| **入口 (Entry)** | 接收用戶流量、TLS 解密 | gost + WireGuard | `bash install.sh ...` |
-| **中轉 (Transit)** | 跨區域轉發、隧道中繼 | gost + WireGuard | `bash install.sh ...` |
-| **落地 (Landing)** | 出站代理、最終出口 | sing-box | `bash install.sh ...` |
+在面板中新增節點後，於對應伺服器上執行：
 
 ```bash
-# 入口 / 中轉節點（預裝 gost + WG）
 bash install.sh <PANEL_URL> <NODE_ID>
 # 例：bash install.sh https://panel.example.com node-abc123
-
-# 落地節點（預裝 sing-box）
-bash install.sh <PANEL_URL> <NODE_ID>
-# 例：bash install.sh https://panel.example.com node-def456
 ```
 
-> **說明**：Agent 會根據面板設定的節點類型自動啟動對應服務。
-> - 入口 / 中轉：啟動 `gost`（轉發引擎）+ `wg-quick@wg0`（WireGuard 隧道）
-> - 落地：啟動 `sing-box`（入站代理）+ `ss-rust`（Shadowsocks 相容）
+Agent 會根據面板設定的節點類型自動啟動對應服務：
+
+| 節點類型 | 用途 | 預裝組件 |
+|----------|------|----------|
+| 入口 (Entry) | 接收用戶流量、TLS 解密 | gost＋WireGuard |
+| 中轉 (Transit) | 跨區域轉發、隧道中繼 | gost＋WireGuard |
+| 落地 (Landing) | 出站代理、最終出口 | sing-box |
 
 ## 版本更新
 
@@ -73,14 +66,7 @@ cd docker && docker compose down && docker compose up -d --build
 
 ## 架構
 
-```
-面板 (Docker) ──WebSocket──▶ 代理 (各節點)
-                                  │
-                    ┌─────────────┼─────────────┐
-                    ▼             ▼             ▼
-               入口/中轉節點   中轉節點       落地節點
-               gost + WG     gost + WG     sing-box
-```
+`Panel(Docker) ←WebSocket→ Agent(節點) ─ gost/WG(入口/中轉) ─ sing-box(落地)`
 
 ## 環境需求
 
