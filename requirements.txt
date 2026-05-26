@@ -1,0 +1,11 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+aiosqlite>=0.20
+websockets>=13.0
+asyncssh>=2.14
+apscheduler>=3.10
+pycryptodome>=3.20
+psutil>=5.9
+httpx
+PyYAML
+cryptography>=41.0

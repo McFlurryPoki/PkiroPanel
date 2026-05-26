@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+  realm-panel:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: realm-panel
+    ports:
+      - "32100:32100"
+    volumes:
+      - ./data:/data
+    environment:
+      - PANEL_PORT=32100
+      - DB_PATH=/data/realm_panel.db
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - PANEL_URL=${PANEL_URL:-https://transet.yumenashyi.com:443}
+    restart: unless-stopped

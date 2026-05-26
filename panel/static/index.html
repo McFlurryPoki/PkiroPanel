@@ -1,0 +1,2490 @@
+<!DOCTYPE html>
+<!-- v2026.05.26.04 -->
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TransetPanel</title>
+<link rel="icon" type="image/png" href="/static/icon.png">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f1a;--accent:#FA8072;--green:#00e676;--red:#ff5252;
+  --text:#e0e0e0;--muted:#8892b0;--border:#2a2a4a;
+  --card-opacity:.35;--bg-blur:0px;--bg-brightness:1;--card-rgb:26,26,46;
+  --radius-sm:14px;--radius:20px;--radius-lg:24px;--radius-pill:50px
+}
+body{font-family:'Microsoft YaHei','Segoe UI','Microsoft JhengHei',system-ui,sans-serif;background:rgba(15,15,26,0.5);color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;z-index:-1;background:url('https://www.loliapi.com/acg/') center/cover no-repeat,linear-gradient(135deg,#1a1a2e,#16213e,#0f3460);filter:blur(var(--bg-blur)) brightness(var(--bg-brightness));transition:background-image 30s}
+
+/* ── 導覽列 (懸浮膠囊) ── */
+header{margin:16px 24px 0;padding:14px 32px;display:flex;align-items:center;justify-content:space-between;background:rgba(var(--card-rgb),var(--card-opacity));border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-pill);box-shadow:0 8px 32px rgba(0,0,0,.35)}
+header h1{font-size:22px;color:var(--accent);font-weight:800;letter-spacing:-.5px}
+header nav{display:flex;gap:6px}
+header nav a{color:var(--muted);text-decoration:none;padding:8px 18px;font-size:15px;border-radius:var(--radius-pill);transition:all .25s;cursor:pointer;font-weight:500}
+header nav a:hover{color:var(--text);background:rgba(255,255,255,.06)}
+header nav a.active{color:#fff;background:var(--accent);box-shadow:0 4px 12px rgba(250,128,114,.3)}
+
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.online{background:var(--green);box-shadow:0 0 8px var(--green)}
+.offline{background:var(--red);box-shadow:0 0 8px var(--red)}
+
+main{padding:18px 32px;max-width:100%;margin:0 24px}
+
+/* ── 卡片 (懸浮圓角) ── */
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-bottom:28px}
+.card{background:rgba(var(--card-rgb),var(--card-opacity));border:1px solid rgba(255,255,255,.05);border-radius:var(--radius-lg);padding:24px;transition:transform .25s,box-shadow .25s;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.35)}
+.card h3{font-size:18px;color:var(--accent);margin-bottom:16px;font-weight:700}
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-item{text-align:left;padding:12px 8px;background:rgba(255,255,255,.04);border-radius:var(--radius-sm)}
+.stat-value{font-size:26px;font-weight:800}
+.stat-label{font-size:12px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+
+/* ── 徽章 (膠囊) ── */
+.badge{padding:4px 14px;border-radius:var(--radius-pill);font-size:12px;font-weight:700;letter-spacing:.3px}
+.badge-online{background:rgba(0,230,118,.18);color:var(--green)}
+.badge-offline{background:rgba(255,82,82,.18);color:var(--red)}
+.badge-entry{background:rgba(250,128,114,.18);color:var(--accent)}
+.badge-transit{background:rgba(0,188,212,.18);color:#00bcd4}
+.badge-landing{background:rgba(255,152,0,.18);color:#ff9800}
+
+/* ── 表格 (圓角懸浮) ── */
+table{width:100%;border-collapse:separate;border-spacing:0;background:rgba(var(--card-rgb),var(--card-opacity));border-radius:var(--radius-lg);overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.15)}
+th,td{padding:10px 16px;text-align:left;font-size:15px}
+th{background:rgba(255,255,255,.05);color:var(--muted);font-weight:700;text-transform:uppercase;font-size:12px;letter-spacing:.8px}
+td{border-bottom:1px solid rgba(255,255,255,.04)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.03)}
+
+/* ── 按鈕 (統一膠囊) ── */
+.btn{padding:10px 22px;border:none;border-radius:var(--radius-pill);cursor:pointer;font-size:14px;font-weight:700;transition:all .25s;letter-spacing:.3px;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 14px rgba(250,128,114,.25)}
+.btn-primary:hover{box-shadow:0 6px 24px rgba(250,128,114,.4);transform:translateY(-1px)}
+.btn-danger{background:rgba(255,82,82,.15);color:var(--red);border:1px solid rgba(255,82,82,.2)}
+.btn-danger:hover{background:rgba(255,82,82,.25)}
+.btn-sm{padding:6px 16px;font-size:12px}
+.btn-ghost{background:rgba(var(--card-rgb),var(--card-opacity));border:1px solid rgba(255,255,255,.1);color:var(--muted)}
+.btn-ghost:hover{color:var(--text);border-color:var(--accent);background:rgba(250,128,114,.08)}
+
+/* ── 輸入框 (膠囊) ── */
+input,select{padding:12px 20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-pill);color:var(--text);font-size:15px;width:100%;margin-bottom:14px;transition:all .25s}
+select{-webkit-appearance:none;appearance:none;padding-right:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238892b0' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;cursor:pointer}
+input:focus,select:focus{outline:none;border-color:var(--accent);background:rgba(255,255,255,.08);box-shadow:0 0 0 3px rgba(250,128,114,.1)}
+
+/* ── Modal (懸浮圓角) ── */
+.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:100;align-items:center;justify-content:center}
+.modal.active{display:flex}
+.modal-box{background:rgba(var(--card-rgb),0.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-lg);padding:32px;width:90%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.modal-box h2{color:var(--accent);margin-bottom:24px;font-size:22px;font-weight:800}
+.modal-content{background:rgba(var(--card-rgb),0.55);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-lg);padding:32px;width:90%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-header h3{color:var(--accent);font-size:20px;margin:0;font-weight:800}
+.modal-close{background:rgba(255,255,255,.06);border:none;color:var(--muted);font-size:20px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .2s}
+.modal-close:hover{color:#fff;background:var(--red)}
+
+.form-row{display:flex;gap:12px}
+.form-row>*{flex:1}
+
+.deploy-log{background:#0a0a14;color:#00e676;font-family:'JetBrains Mono',monospace;font-size:13px;padding:16px;border-radius:var(--radius);max-height:300px;overflow-y:auto;margin-top:14px;white-space:pre-wrap;border:1px solid rgba(0,230,118,.1)}
+
+.traffic-bar{height:8px;border-radius:var(--radius-pill);background:rgba(255,255,255,.06);overflow:hidden;margin-top:6px}
+.traffic-fill{height:100%;background:var(--accent);border-radius:var(--radius-pill);transition:width .5s}
+
+/* ── 分頁標籤 (膠囊) ── */
+.tabs{display:flex;gap:8px;margin-bottom:24px}
+.tab{padding:10px 22px;background:rgba(var(--card-rgb),var(--card-opacity));border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-pill);color:var(--muted);cursor:pointer;font-size:14px;font-weight:600;transition:all .25s}
+.tab:hover{color:var(--text);border-color:rgba(255,255,255,.15)}
+.tab.active{background:var(--accent);color:#fff;border-color:var(--accent);box-shadow:0 4px 14px rgba(250,128,114,.25)}
+
+/* ── 批量工具列 ── */
+.batch-toolbar{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(var(--card-rgb),var(--card-opacity));border:1px solid rgba(255,255,255,.1);border-radius:var(--radius-pill);padding:12px 24px;margin:0 8px 8px 8px;gap:8px;align-items:center;justify-content:flex-start;flex-wrap:wrap;box-shadow:0 -4px 20px rgba(0,0,0,.5);z-index:50}
+.batch-toolbar.active{display:flex}
+.batch-toolbar select,.batch-toolbar .btn-ghost{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+.batch-toolbar .btn-ghost:hover{background:rgba(255,255,255,.12);border-color:var(--accent)}
+.batch-toolbar span{color:var(--accent);font-weight:700;font-size:14px;white-space:nowrap}
+.batch-toolbar select{padding:8px 16px;padding-right:32px;margin-bottom:0;width:auto;min-width:140px}
+.batch-check{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;margin:0}
+.batch-check-all{width:18px;height:18px;accent-color:var(--accent);cursor:pointer;margin:0}
+.group-section{margin-bottom:24px}
+.group-card{background:rgba(var(--card-rgb),var(--card-opacity));border:1px solid rgba(255,255,255,.05);border-radius:var(--radius-lg);padding:20px;margin-bottom:12px;transition:box-shadow .25s}
+.group-card:hover{box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.group-card h4{color:var(--accent);font-size:16px;margin-bottom:8px;font-weight:700}
+.group-card p{color:var(--muted);font-size:13px;margin-bottom:12px}
+.group-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--muted)}
+.group-meta span{background:rgba(255,255,255,.04);padding:4px 12px;border-radius:var(--radius-pill)}
+
+.copy-btn{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--muted);padding:4px 14px;border-radius:var(--radius-pill);cursor:pointer;font-size:12px;font-weight:600;transition:all .2s}
+.copy-btn:hover{color:var(--text);border-color:var(--accent);background:rgba(250,128,114,.08)}
+
+.error-msg{color:var(--red);font-size:13px;margin-top:-8px;margin-bottom:12px;display:none}
+.error-msg.show{display:block}
+
+/* ── 登入頁 ── */
+.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh}
+.login-box{background:rgba(var(--card-rgb),0.5);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-lg);padding:48px 40px;width:400px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.login-box h1{color:var(--accent);font-size:32px;margin-bottom:8px;font-weight:800}
+.login-box p{color:var(--muted);font-size:15px;margin-bottom:32px}
+.login-box input{margin-bottom:18px}
+.login-box .btn{width:100%;padding:14px;justify-content:center}
+
+/* ── 頭像 ── */
+.avatar-img{width:38px;height:38px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);vertical-align:middle}
+.avatar-placeholder{width:38px;height:38px;border-radius:50%;background:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;vertical-align:middle}
+
+/* ── 設定面板 ── */
+.settings-panel{position:fixed;top:88px;right:24px;z-index:99;background:rgba(15,15,26,.75);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius-lg);padding:28px;width:320px;display:none;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+.settings-panel.open{display:block}
+.settings-panel h3{font-size:18px;color:var(--accent);margin-bottom:20px;font-weight:800}
+.settings-row{margin-bottom:18px}
+.settings-row label{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:8px}
+.settings-row label span{color:var(--text);font-weight:700}
+.settings-row input[type=range]{-webkit-appearance:none;width:100%;height:6px;background:rgba(255,255,255,.08);border-radius:var(--radius-pill);outline:none}
+.settings-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--accent);cursor:pointer;transition:box-shadow .2s;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.settings-row input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 16px var(--accent)}
+.settings-reset{display:block;width:100%;padding:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-pill);color:var(--muted);font-size:13px;cursor:pointer;margin-top:16px;transition:all .25s;font-weight:600}
+.settings-reset:hover{color:var(--text);border-color:var(--accent);background:rgba(250,128,114,.06)}
+.settings-gear{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);color:var(--muted);font-size:20px;cursor:pointer;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:all .25s}
+.settings-gear:hover,.settings-gear.active{color:var(--accent);background:rgba(250,128,114,.15);border-color:var(--accent)}
+
+.header-right{display:flex;align-items:center;gap:14px}
+.user-badge{font-size:14px;color:var(--muted);display:flex;align-items:center;gap:8px}
+.user-badge strong{color:var(--text)}
+
+/* ── 色卡 ── */
+.accent-swatch{display:inline-block;width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.15);vertical-align:middle;margin-left:8px;background:var(--accent)}
+input[type=color]{-webkit-appearance:none;width:38px;height:38px;border:2px solid rgba(255,255,255,.1);border-radius:50%;cursor:pointer;padding:2px;background:transparent;margin-bottom:0}
+input[type=color]::-webkit-color-swatch-wrapper{padding:0}
+input[type=color]::-webkit-color-swatch{border-radius:50%;border:none}
+
+/* ── 滾動條 ── */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:var(--radius-pill)}
+::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.2)}
+
+/* ── tcping 輸出區 ── */
+#tcpingResult{background:rgba(0,0,0,.3);color:var(--green);padding:16px;border-radius:var(--radius);max-height:400px;overflow:auto;white-space:pre-wrap;font-family:'JetBrains Mono',monospace;font-size:13px;border:1px solid rgba(0,230,118,.1);line-height:1.7}
+
+/* ── 手機適配 ── */
+@media (max-width:768px){
+  header{margin:8px 8px 0;padding:10px 14px;flex-wrap:wrap;gap:8px;border-radius:var(--radius-lg)}
+  header h1{font-size:17px;order:1}
+  header nav{order:3;width:100%;overflow-x:auto;gap:4px;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  header nav a{padding:6px 12px;font-size:13px;white-space:nowrap;flex-shrink:0}
+  .header-right{order:2;margin-left:auto}
+  .user-badge strong{display:none}
+  main{padding:12px 10px}
+  .cards{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+  .card{padding:16px}
+  .stat-grid{grid-template-columns:1fr 1fr;gap:6px}
+  .stat-value{font-size:22px}
+  .stat-item{padding:10px 6px}
+  table{font-size:12px;display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  th,td{padding:8px 10px;font-size:12px}
+  th{font-size:10px;letter-spacing:.4px}
+  .btn{font-size:12px;padding:8px 14px}
+  .btn-sm{padding:5px 10px;font-size:11px}
+  .form-row{flex-direction:column;gap:0}
+  .form-row>*{flex:none}
+  input,select{padding:10px 14px;font-size:14px}
+  .modal-box,.modal-content{padding:20px;max-width:95vw;border-radius:var(--radius)}
+  .modal-box h2{font-size:18px;margin-bottom:16px}
+  .settings-panel{top:60px;right:4px;width:calc(100vw - 16px);max-width:320px;padding:20px}
+  .tabs{overflow-x:auto;gap:6px;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .tab{padding:8px 14px;font-size:12px;white-space:nowrap;flex-shrink:0}
+  .copy-btn{padding:3px 10px;font-size:11px}
+  .badge{padding:2px 10px;font-size:10px}
+  .settings-gear{width:32px;height:32px;font-size:17px}
+  .header-right{gap:8px}
+  /* 讓表格按鈕不折行 */
+  td[style*="nowrap"]{white-space:nowrap}
+}
+@media (max-width:480px){
+  header{padding:8px 10px;gap:4px}
+  header nav a{padding:5px 10px;font-size:11px}
+  main{padding:10px 6px}
+  .cards{grid-template-columns:1fr 1fr;gap:8px}
+  .card{padding:12px}
+  .stat-value{font-size:18px}
+  .stat-label{font-size:10px}
+  th,td{padding:6px 8px;font-size:11px}
+  .btn{padding:7px 12px;font-size:11px}
+}
+</style>
+</head>
+<body>
+
+<!-- 登入頁 -->
+<div id="loginPage" class="login-page" style="display:none">
+  <div class="login-box">
+    <h1><img src="/static/icon.png" alt="" style="width:28px;height:28px;vertical-align:middle;margin-right:8px">TransetPanel</h1>
+    <p>請登入以繼續</p>
+    <input id="loginUser" type="text" placeholder="使用者名稱" autocomplete="username">
+    <input id="loginPass" type="password" placeholder="密碼" autocomplete="current-password">
+    <p class="error-msg" id="loginError">帳號或密碼錯誤</p>
+    <button class="btn btn-primary" onclick="doLogin()">登入</button>
+  </div>
+</div>
+
+<!-- 主介面 -->
+<div id="mainApp" style="display:none">
+<header>
+  <h1><img src="/static/icon.png" alt="" style="width:28px;height:28px;vertical-align:middle;margin-right:8px">TransetPanel</h1>
+  <nav>
+    <a class="active" data-tab="dashboard">儀表板</a>
+    <a data-tab="nodes">節點</a>
+    <a data-tab="forwards">轉發</a>
+    <a data-tab="ss">代理</a>
+    <a data-tab="traffic">流量</a>
+    <a data-tab="users">帳號</a>
+    <a data-tab="sub">訂閱</a>
+  </nav>
+  <div class="header-right">
+    <span id="onlineCount" style="font-size:15px;color:var(--muted)"></span>
+    <span class="user-badge" id="userBadge"></span>
+    <button class="settings-gear" id="gearBtn" title="介面設定" onclick="toggleSettings()">⚙</button>
+    <button class="btn btn-ghost btn-sm" onclick="doLogout()">登出</button>
+  </div>
+</header>
+<main id="app"></main>
+</div>
+
+<!-- 設定面板 -->
+<div class="settings-panel" id="settingsPanel">
+  <h3>⚙ 介面設定</h3>
+  <div class="settings-row">
+    <label>背景模糊 <span id="blurVal">0px</span></label>
+    <input type="range" id="bgBlur" min="0" max="20" value="0" step="0.5" oninput="updateSetting('bgBlur','bg-blur','blurVal','px')">
+  </div>
+  <div class="settings-row">
+    <label>背景亮度 <span id="brightVal">0.30</span></label>
+    <input type="range" id="bgBright" min="0" max="1" value="0.3" step="0.05" oninput="updateSetting('bgBright','bg-brightness','brightVal','')">
+  </div>
+  <div class="settings-row">
+    <label>卡片透明度 <span id="opacityVal">0.80</span></label>
+    <input type="range" id="cardOpacity" min="0" max="1" value="0.8" step="0.05" oninput="updateSetting('cardOpacity','card-opacity','opacityVal','')">
+  </div>
+  <div class="settings-row">
+    <label>自訂背景網址</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="bgUrl" placeholder="https://… 留空使用預設 ACG 隨機圖" style="flex:1;margin-bottom:0">
+      <button class="btn btn-primary btn-sm" onclick="applyBgUrl()" style="white-space:nowrap;margin-bottom:0">套用</button>
+    </div>
+    <small style="color:var(--muted);font-size:11px">支援遠端圖床 API，每次重整隨機換圖</small>
+  </div>
+  <div class="settings-row">
+    <label>面板標題</label>
+    <div style="display:flex;gap:6px">
+      <input type="text" id="panelTitle" placeholder="TransetPanel" style="flex:1;margin-bottom:0">
+      <button class="btn btn-primary btn-sm" onclick="applyPanelTitle()" style="white-space:nowrap;margin-bottom:0">套用</button>
+    </div>
+  </div>
+  <div class="settings-row">
+    <label>面板圖示 (PNG)</label>
+    <div style="display:flex;gap:6px">
+      <input type="file" id="panelIcon" accept="image/png" onchange="applyPanelIcon()" style="flex:1;margin-bottom:0;font-size:13px">
+    </div>
+  </div>
+  <div class="settings-row">
+    <label>主題色 <span id="accentVal" style="color:var(--accent)">#FA8072</span><span class="accent-swatch"></span></label>
+    <div style="display:flex;gap:8px;align-items:center">
+      <input type="color" id="accentColor" value="#FA8072" oninput="updateAccent(this.value)">
+    </div>
+  </div>
+  <button class="settings-reset" onclick="resetSettings()">↺ 恢復預設</button>
+</div>
+
+<!-- 新增節點 -->
+<div class="modal" id="addNodeModal">
+  <div class="modal-box">
+    <h2>新增節點</h2>
+    <p style="color:var(--muted);font-size:12px;margin-bottom:16px">建立後會自動產生節點 ID，請記下用於 Agent 部署</p>
+    <form id="addNodeForm">
+      <input name="name" placeholder="節點名稱" required>
+      <select name="type" required>
+        <option value="entry">入口節點</option>
+        <option value="transit">中轉節點</option>
+        <option value="landing">落地節點</option>
+      </select>
+      <input name="host" placeholder="主機位址 / IP" required>
+      <div class="form-row">
+        <input name="entry_ip" placeholder="入口 IP（選填）">
+        <input name="port_start" type="number" placeholder="起始埠">
+        <input name="port_end" type="number" placeholder="結束埠">
+      </div>
+      <div class="form-row">
+        <input name="ssh_port" type="number" placeholder="SSH 埠" value="22">
+        <input name="ssh_user" placeholder="SSH 使用者" value="root">
+        <input name="ssh_password" type="password" placeholder="SSH 密碼">
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary">儲存節點</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('addNodeModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 新增轉發 -->
+<!-- 新增端口轉發 -->
+<div class="modal" id="addForwardModal">
+  <div class="modal-box">
+    <h2>新增端口轉發</h2>
+    <form id="addForwardForm">
+      <label style="font-size:14px;color:var(--muted);margin-bottom:4px;display:block">節點</label>
+      <select name="node_id" required></select>
+      <input name="listen_addr" placeholder="監聽位址（例：0.0.0.0:443）" required>
+      <select id="exportNode" onchange="autoFillRemote()">
+        <option value="">— 快速選擇目標節點 —</option>
+      </select>
+      <input id="remoteAddr" name="remote_addr" placeholder="遠端位址（例：1.2.3.4:8443）" required>
+      <select name="tls_mode">
+        <option value="none">無 TLS</option>
+        <option value="tls">TLS</option>
+        <option value="mtls">mTLS</option>
+      </select>
+      <input name="rate_limit" type="number" placeholder="限速 KB/s（0=不限速）" value="0">
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary">新增端口轉發</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('addForwardModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 新增隧道轉發 -->
+<div class="modal" id="addTunnelModal">
+  <div class="modal-box">
+    <h2>新增隧道轉發</h2>
+    <form id="addTunnelForm">
+      <label style="font-size:14px;color:var(--muted);margin-bottom:4px;display:block">入口節點（對外監聽）</label>
+      <select name="entry_node_id" required></select>
+      <div class="form-row">
+        <input name="listen_port" type="number" placeholder="入口監聽埠" required>
+        <select name="tls_mode">
+          <option value="tls">TLS 隧道</option>
+          <option value="mtls">mTLS 隧道</option>
+          <option value="wg">WireGuard 隧道</option>
+        </select>
+      </div>
+      <label style="font-size:14px;color:var(--muted);margin-bottom:4px;display:block">出口 / 中轉節點</label>
+      <select name="exit_node_id" required></select>
+      <input name="tunnel_port" type="number" placeholder="隧道內部埠" required>
+      <label style="font-size:14px;color:var(--muted);margin-bottom:4px;display:block">落地節點（最終目標）</label>
+      <input name="landing_addr" placeholder="落地 IP:Port（例：1.2.3.4:8388）" required>
+      <input name="rate_limit" type="number" placeholder="限速 KB/s（0=不限速）" value="0">
+      <p style="font-size:13px;color:var(--muted);margin:-8px 0 12px">自動建立兩條規則：入口→出口（TLS隧道）＋ 出口→落地</p>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary">建立隧道</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('addTunnelModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 新增入站（代理） -->
+<div class="modal" id="addInboundModal">
+  <div class="modal-box">
+    <h2 id="inboundModalTitle">新增入站</h2>
+    <form id="addInboundForm">
+      <select name="node_id" required></select>
+      <select name="protocol" required onchange="onProtocolChange()">
+        <option value="shadowsocks">Shadowsocks</option>
+        <option value="vmess">VMess</option>
+        <option value="vless">VLESS</option>
+        <option value="trojan">Trojan</option>
+        <option value="hysteria2">Hysteria2</option>
+        <option value="hysteria">Hysteria</option>
+        <option value="tuic">TUIC</option>
+        <option value="wireguard">WireGuard</option>
+        <option value="anytls">AnyTLS</option>
+        <option value="socks">SOCKS5</option>
+        <option value="http">HTTP</option>
+      </select>
+      <input name="port" type="number" placeholder="埠號" required>
+      <input name="tag" placeholder="標籤（留空自動產生）">
+      <!-- 動態欄位由 onProtocolChange() 控制 -->
+      <div id="protoFields" style="display:none"></div>
+      <div id="streamFields" style="display:none;margin-top:12px;border-top:1px solid rgba(255,255,255,.06);padding-top:12px">
+        <label style="font-size:13px;color:var(--muted);display:block;margin-bottom:6px">傳輸 / 串流設定</label>
+        <select name="stream_network" onchange="onStreamChange()">
+          <option value="tcp">TCP (預設)</option>
+          <option value="ws">WebSocket</option>
+          <option value="grpc">gRPC</option>
+          <option value="http">H2</option>
+          <option value="xhttp">XHTTP (SplitHTTP)</option>
+        </select>
+        <div id="streamExtra" style="display:none">
+          <input name="stream_path" placeholder="路徑（例：/ws 或 /xhttp）">
+          <input name="stream_host" placeholder="Host（例：example.com）">
+          <input name="stream_service" placeholder="gRPC service name">
+        </div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer">
+          <input type="checkbox" name="tls_enabled" value="1" style="width:auto;margin:0;accent-color:var(--accent)" onchange="document.getElementById('tlsExtra').style.display=this.checked?'block':'none'"> 啟用 TLS
+        </label>
+        <div id="tlsExtra" style="display:none">
+          <input name="tls_server_name" placeholder="SNI / server_name（例：example.com）">
+          <input name="tls_cert_path" placeholder="憑證路徑（例：/etc/ssl/cert.pem）">
+          <input name="tls_key_path" placeholder="私鑰路徑（例：/etc/ssl/key.pem）">
+          <label style="display:flex;align-items:center;gap:8px;margin-top:8px;cursor:pointer">
+            <input type="checkbox" name="reality_enabled" value="1" style="width:auto;margin:0;accent-color:var(--accent)" onchange="document.getElementById('realityExtra').style.display=this.checked?'block':'none'"> Reality (僅 VLESS)
+          </label>
+          <div id="realityExtra" style="display:none">
+            <input name="reality_private_key" placeholder="Reality 私鑰">
+            <input name="reality_short_id" placeholder="Short ID（hex）">
+            <input name="reality_server_name" placeholder="回落 SNI（例：www.microsoft.com）">
+          </div>
+        </div>
+      </div>
+      <input name="rate_limit" type="number" placeholder="限速 KB/s（0=不限速）" value="0">
+      <input type="hidden" name="editing_inbound_id">
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary" id="inboundFormSubmit">建立入站</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('addInboundModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 部署 Agent -->
+<div class="modal" id="deployModal">
+  <div class="modal-box">
+    <h2>部署 Agent</h2>
+    <p id="deployNodeName" style="color:var(--muted);margin-bottom:16px"></p>
+    <button class="btn btn-primary" onclick="startDeploy()">開始部署</button>
+    <div class="deploy-log" id="deployLog"></div>
+    <button class="btn btn-danger" style="margin-top:12px" onclick="closeModal('deployModal')">關閉</button>
+  </div>
+</div>
+
+<!-- 新增帳號 -->
+<div class="modal" id="addUserModal">
+  <div class="modal-box">
+    <h2>新增帳號</h2>
+    <form id="addUserForm">
+      <input name="username" placeholder="使用者名稱" required minlength="2" maxlength="32">
+      <input name="password" type="password" placeholder="密碼" required minlength="6">
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary">建立帳號</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('addUserModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 修改密碼 -->
+<div class="modal" id="changePwModal">
+  <div class="modal-box">
+    <h2>修改密碼</h2>
+    <form id="changePwForm">
+      <input name="old_password" type="password" placeholder="目前密碼" required>
+      <input name="new_password" type="password" placeholder="新密碼" required minlength="6">
+      <p class="error-msg" id="changePwError">目前密碼錯誤</p>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary">修改密碼</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('changePwModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 編輯個人資料 -->
+<div class="modal" id="editProfileModal">
+  <div class="modal-box">
+    <h2>編輯個人資料</h2>
+    <form id="editProfileForm">
+      <input name="username" placeholder="使用者名稱" minlength="2" maxlength="32">
+      <input name="display_name" placeholder="顯示名稱（選填）" maxlength="64">
+      <input name="avatar_url" placeholder="頭像圖片網址（選填）" maxlength="512">
+      <p class="error-msg" id="profileError">使用者名稱已被使用</p>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary">儲存變更</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('editProfileModal')">取消</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- === Traffic Edit Modal === -->
+<div class="modal" id="trafficEditModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3>流量設定</h3><button class="modal-close" onclick="closeModal('trafficEditModal')">&times;</button></div>
+    <form id="trafficEditForm">
+      <input type="hidden" name="node_id" id="trafficEditNodeId">
+      <div class="form-group"><label>上行上限 (GiB，0=不限)</label><input type="number" name="period_limit_rx" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label>下行上限 (GiB，0=不限)</label><input type="number" name="period_limit_tx" step="0.01" placeholder="0.00"></div>
+      <div class="form-group"><label>已用上行 (GiB，留空不修改)</label><input type="number" name="period_rx_gib" step="0.01" placeholder="留空不修改"></div>
+      <div class="form-group"><label>已用下行 (GiB，留空不修改)</label><input type="number" name="period_tx_gib" step="0.01" placeholder="留空不修改"></div>
+      <div class="form-group"><label>重置日 (0=不重置，1-31)</label><input type="number" name="reset_day" min="0" max="31" placeholder="0"></div>
+      <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px">儲存</button>
+    </form>
+  </div>
+</div>
+
+<!-- === Tcping Modal === -->
+<div class="modal" id="tcpingModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="tcpingTitle">TCP Ping 測試</h3><button class="modal-close" onclick="closeModal('tcpingModal')">&times;</button></div>
+    <pre id="tcpingResult" style="background:rgba(15,15,26,0.75);color:var(--green);padding:12px;border-radius:6px;max-height:400px;overflow:auto;white-space:pre-wrap;font-family:monospace;font-size:14px">測試中…</pre>
+  </div>
+</div>
+
+<!-- === 訂閱配置 Modal === -->
+<div class="modal" id="subModal">
+  <div class="modal-box">
+    <div class="modal-header"><h3 id="subModalTitle">新增訂閱配置</h3><button class="modal-close" onclick="closeModal('subModal')">&times;</button></div>
+    <form id="subForm">
+      <input name="name" placeholder="配置名稱（例：主訂閱）" required>
+      <label style="font-size:14px;color:var(--muted);margin-bottom:4px;display:block">節點來源（每行一個 URL 或節點配置，如 ss://、vmess:// 等）</label>
+      <textarea name="node_sources_text" rows="4" placeholder="https://example.com/sub?token=***&#10;ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpwYXNz@1.2.3.4:8388#節點名" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-pill);color:var(--text);font-size:14px;padding:12px 16px;margin-bottom:14px;resize:vertical"></textarea>
+      <label style="font-size:14px;color:var(--muted);margin-bottom:4px;display:block">規則來源（每行一個 URL，支援 GitHub Raw）</label>
+      <textarea name="rule_sources_text" rows="3" placeholder="https://raw.githubusercontent.com/ACL4SSR/ACL4SSR/master/Clash/config/ACL4SSR_Online.ini" style="width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius-pill);color:var(--text);font-size:14px;padding:12px 16px;margin-bottom:14px;resize:vertical"></textarea>
+      <select name="output_format">
+        <option value="clash">Clash Meta YAML</option>
+        <option value="singbox">Sing-box JSON</option>
+        <option value="base64">Base64 連結（小火箭 / V2Ray）</option>
+      </select>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;white-space:nowrap">
+          <input type="checkbox" name="replace_server_enabled" value="1" style="width:auto;margin:0;accent-color:var(--accent)" onchange="document.getElementById('replaceServerInput').style.display=this.checked?'block':'none'"> 替換節點入口
+        </label>
+        <input type="text" id="replaceServerInput" name="replace_server" placeholder="輸入 IP 或域名（替換所有節點的 server）" style="display:none;flex:1;margin-bottom:0">
+      </div>
+      <input name="filter_regex" placeholder="節點名稱過濾（Regex，留空=全部）">
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button type="submit" class="btn btn-primary" id="subFormSubmit">建立配置</button>
+        <button type="button" class="btn btn-danger" onclick="closeModal('subModal')">取消</button>
+      </div>
+    </form>
+  </div>
+
+<!-- 用戶分組編輯 -->
+<div class="modal" id="userGroupModal"><div class="modal-content" id="userGroupModalContent"></div></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// 認證
+// ══════════════════════════════════════════════════════════════════
+let authToken = null, currentUser = null;
+
+function getToken() {
+  if (authToken) return authToken;
+  try { authToken = localStorage.getItem('realm-token'); } catch(e) {}
+  return authToken;
+}
+
+function setToken(token) {
+  authToken = token;
+  try { localStorage.setItem('realm-token', token); } catch(e) {}
+}
+
+function clearToken() {
+  authToken = null;
+  try { localStorage.removeItem('realm-token'); } catch(e) {}
+}
+
+async function api(url, opts={}) {
+  const headers = { 'Content-Type': 'application/json', ...opts.headers };
+  const token = getToken();
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(url, { ...opts, headers });
+  if (res.status === 401) {
+    clearToken();
+    showLogin();
+    throw new Error('登入已過期');
+  }
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    const text = await res.text();
+    throw new Error(`伺服器錯誤 (${res.status}): ${text.substring(0,200)}`);
+  }
+  return res.json();
+}
+
+function showLogin() {
+  document.getElementById('loginPage').style.display = 'flex';
+  document.getElementById('mainApp').style.display = 'none';
+  currentUser = null;
+  clearToken();
+}
+
+function showApp() {
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('mainApp').style.display = 'block';
+}
+
+async function doLogin() {
+  const username = document.getElementById('loginUser').value;
+  const password = document.getElementById('loginPass').value;
+  const errEl = document.getElementById('loginError');
+  errEl.classList.remove('show');
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (!res.ok) { errEl.classList.add('show'); return; }
+    const data = await res.json();
+    setToken(data.token);
+    currentUser = data.user;
+    showApp();
+    initApp();
+  } catch(e) {
+    errEl.classList.add('show');
+  }
+}
+
+function doLogout() {
+  clearToken();
+  currentUser = null;
+  showLogin();
+}
+
+// Enter 登入
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('loginPage').style.display === 'flex') {
+    doLogin();
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// 介面設定
+// ══════════════════════════════════════════════════════════════════
+const SETTINGS_DEFAULTS = {bgBlur:2, bgBright:0.3, cardOpacity:0.8};
+const SETTINGS_KEYS = [
+  {id:'bgBlur', css:'--bg-blur', label:'blurVal', suffix:'px'},
+  {id:'bgBright', css:'--bg-brightness', label:'brightVal', suffix:''},
+  {id:'cardOpacity', css:'--card-opacity', label:'opacityVal', suffix:''},
+];
+const DEFAULT_BG = "url('https://www.loliapi.com/acg/') center/cover no-repeat,linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)";
+
+function getBgUrl() {
+  const custom = localStorage.getItem('realm-bg-url');
+  if (custom) return `url('${custom}') center/cover no-repeat,linear-gradient(135deg,#1a1a2e,#16213e,#0f3460)`;
+  return DEFAULT_BG;
+}
+
+function applyBackground() {
+  document.body.style.setProperty('background-image', getBgUrl());
+  // Also update ::before via CSS custom property fallback by re-setting the style
+  const sheet = document.createElement('style');
+  sheet.id = 'bg-override';
+  const old = document.getElementById('bg-override');
+  if (old) old.remove();
+  sheet.textContent = `body::before{background:${getBgUrl()}}`;
+  document.head.appendChild(sheet);
+}
+
+function applyBgUrl() {
+  const url = document.getElementById('bgUrl').value.trim();
+  if (url) {
+    localStorage.setItem('realm-bg-url', url);
+  } else {
+    localStorage.removeItem('realm-bg-url');
+  }
+  applyBackground();
+}
+
+function applyPanelTitle() {
+  const title = document.getElementById('panelTitle').value.trim();
+  if (title) {
+    localStorage.setItem('realm-panel-title', title);
+  } else {
+    localStorage.removeItem('realm-panel-title');
+  }
+  applyTitles();
+}
+
+function applyTitles() {
+  const title = localStorage.getItem('realm-panel-title') || 'TransetPanel';
+  const icon = localStorage.getItem('realm-panel-icon') || '/static/icon.png';
+  document.title = title;
+  // Update header h1
+  const h1s = document.querySelectorAll('header h1, .login-box h1');
+  for (const h1 of h1s) {
+    h1.innerHTML = `<img src="${icon}" alt="" style="width:28px;height:28px;vertical-align:middle;margin-right:8px">${title}`;
+  }
+}
+
+function applyPanelIcon() {
+  const file = document.getElementById('panelIcon').files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    localStorage.setItem('realm-panel-icon', e.target.result);
+    applyTitles();
+  };
+  reader.readAsDataURL(file);
+}
+
+function updateAccent(color) {
+  document.documentElement.style.setProperty('--accent', color);
+  document.getElementById('accentVal').textContent = color;
+  document.getElementById('accentVal').style.color = color;
+  localStorage.setItem('realm-accent', color);
+}
+
+function loadSettings() {
+  let s;
+  try { s = JSON.parse(localStorage.getItem('realm-ui-settings')) || {}; } catch(e) { s = {}; }
+  for (const k of SETTINGS_KEYS) {
+    const val = s[k.id] ?? SETTINGS_DEFAULTS[k.id];
+    document.getElementById(k.id).value = val;
+    document.documentElement.style.setProperty(k.css, val + k.suffix);
+    document.getElementById(k.label).textContent = val + k.suffix;
+  }
+  // Load custom bg URL
+  const bg = localStorage.getItem('realm-bg-url') || '';
+  document.getElementById('bgUrl').value = bg;
+  applyBackground();
+  // Load custom accent
+  const accent = localStorage.getItem('realm-accent') || '#FA8072';
+  document.getElementById('accentColor').value = accent;
+  updateAccent(accent);
+  // Load custom panel title
+  const title = localStorage.getItem('realm-panel-title') || '';
+  document.getElementById('panelTitle').value = title;
+  applyTitles();
+}
+
+function updateSetting(sliderId, cssVar, labelId, suffix) {
+  const val = document.getElementById(sliderId).value;
+  document.documentElement.style.setProperty(cssVar, val + suffix);
+  document.getElementById(labelId).textContent = Number(val).toFixed(suffix===''?2:1) + suffix;
+  saveSettings();
+}
+
+function saveSettings() {
+  const s = {};
+  for (const k of SETTINGS_KEYS) s[k.id] = Number(document.getElementById(k.id).value);
+  localStorage.setItem('realm-ui-settings', JSON.stringify(s));
+}
+
+function toggleSettings() {
+  const panel = document.getElementById('settingsPanel');
+  const btn = document.getElementById('gearBtn');
+  panel.classList.toggle('open');
+  if(btn) btn.classList.toggle('active');
+}
+
+function resetSettings() {
+  localStorage.removeItem('realm-ui-settings');
+  localStorage.removeItem('realm-bg-url');
+  localStorage.removeItem('realm-accent');
+  localStorage.removeItem('realm-panel-title');
+  localStorage.removeItem('realm-panel-icon');
+  document.getElementById('bgUrl').value = '';
+  document.getElementById('panelTitle').value = '';
+  document.getElementById('panelIcon').value = '';
+  loadSettings();
+}
+
+document.addEventListener('click', e => {
+  const panel = document.getElementById('settingsPanel');
+  if (panel.classList.contains('open') && !panel.contains(e.target) && e.target.id !== 'gearBtn') {
+    panel.classList.remove('open');
+    const btn = document.getElementById('gearBtn');
+    if(btn) btn.classList.remove('active');
+  }
+});
+
+loadSettings();
+
+// ══════════════════════════════════════════════════════════════════
+// 狀態
+// ══════════════════════════════════════════════════════════════════
+let nodes = [], forwards = [], ssNodes = [], inbounds = [], trafficData = [], users = [], subConfigs = [], groups = [];
+let currentTab = 'dashboard';
+let deployNodeId = null, deploySource = null;
+let selectedItems = new Set();
+let batchMode = false;
+
+// ══════════════════════════════════════════════════════════════════
+// 初始化
+// ══════════════════════════════════════════════════════════════════
+async function initApp() {
+  const token = getToken();
+  if (!token) { showLogin(); return; }
+
+  try {
+    const me = await api('/api/auth/me');
+    currentUser = me.user;
+  } catch(e) {
+    showLogin();
+    return;
+  }
+
+  showApp();
+  updateHeader();
+  updateNavVisibility();
+  await fetchAllData();
+  render();
+}
+
+function updateHeader() {
+  const name = currentUser.display_name || currentUser.username;
+  const avatar = currentUser.avatar_url;
+  let avatarHtml;
+  if (avatar) {
+    avatarHtml = `<img class="avatar-img" src="${avatar}" alt="" onerror="this.parentElement.innerHTML='<span class=\\'avatar-placeholder\\'>${name[0].toUpperCase()}</span>'">`;
+  } else {
+    avatarHtml = `<span class="avatar-placeholder">${name[0].toUpperCase()}</span>`;
+  }
+  document.getElementById('userBadge').innerHTML = `${avatarHtml}<strong>${name}</strong>`;
+}
+
+function avatarHtml(u) {
+  const name = u.display_name || u.username;
+  if (u.avatar_url) {
+    return `<img class="avatar-img" src="${u.avatar_url}" alt="" onerror="this.innerHTML='<span class=\\'avatar-placeholder\\'>${name[0].toUpperCase()}</span>'">`;
+  }
+  return `<span class="avatar-placeholder">${name[0].toUpperCase()}</span>`;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 資料層（與渲染分離）
+// ══════════════════════════════════════════════════════════════════
+async function fetchAllData() {
+  [nodes, forwards, ssNodes] = await Promise.all([
+    api('/api/nodes'), api('/api/forwards'), api('/api/ss')
+  ]);
+  try { inbounds = await api('/api/inbounds'); } catch(e) {}
+  try { trafficData = await api('/api/traffic/summary'); } catch(e) {}
+  try { const r = await api('/api/users'); users = r.users || []; } catch(e) {}
+  try { subConfigs = await api('/api/sub/configs'); } catch(e) {}
+  try { groups = await api('/api/groups'); } catch(e) {}
+}
+
+async function fetchNodes() {
+  nodes = await api('/api/nodes');
+}
+
+async function fetchForwards() {
+  forwards = await api('/api/forwards');
+}
+
+async function fetchSS() {
+  ssNodes = await api('/api/ss');
+  try { inbounds = await api('/api/inbounds'); } catch(e) {}
+}
+
+async function fetchTraffic() {
+  try { trafficData = await api('/api/traffic/summary'); } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 渲染（純前端，從本地快取讀取，不發請求）
+// ══════════════════════════════════════════════════════════════════
+function render(tab = null) {
+  if (tab) currentTab = tab;
+
+  const onlineNodes = nodes.filter(n=>n.status==='online').length;
+  document.getElementById('onlineCount').textContent = `${onlineNodes}/${nodes.length} 在線`;
+
+  switch(currentTab) {
+    case 'dashboard': renderDashboard(); break;
+    case 'nodes': renderNodes(); break;
+    case 'forwards': renderForwards(); break;
+    case 'ss': renderSS(); break;
+    case 'traffic': renderTraffic(); break;
+    case 'users': renderUsers(); break;
+    case 'sub': renderSub(); break;
+    case 'groups': renderGroups(); break;
+  }
+}
+
+function renderDashboard() {
+  const onlineNodes = nodes.filter(n=>n.status==='online');
+  const totalRx = Object.values(trafficData).reduce((s,t)=>s+(t.total_rx_bytes||0),0);
+  const totalTx = Object.values(trafficData).reduce((s,t)=>s+(t.total_tx_bytes||0),0);
+
+  let h = '<div class="cards">';
+  h += `<div class="card"><h3>節點數量</h3><div class="stat-value" style="font-size:42px;color:var(--accent)">${onlineNodes.length}/${nodes.length}</div><div class="stat-label">在線 / 總數</div></div>`;
+  h += `<div class="card"><h3>轉發隧道</h3><div class="stat-value" style="font-size:42px;color:#00bcd4">${forwards.length}</div><div class="stat-label">已設定規則</div></div>`;
+  h += `<div class="card"><h3>入站代理</h3><div class="stat-value" style="font-size:42px;color:#ff9800">${inbounds.length}</div><div class="stat-label">Sing-box 協定</div></div>`;
+  h += `<div class="card"><h3>總流量</h3><div style="display:flex;gap:20px;margin-top:8px"><div><span style="color:var(--green)">↓</span> ${fmtBytes(totalRx)}</div><div><span style="color:var(--accent)">↑</span> ${fmtBytes(totalTx)}</div></div></div>`;
+  h += '</div>';
+
+  // ── Per-node tunnel view ──
+  for (const n of nodes) {
+    const isOnline = n.status === 'online';
+    const stDot = isOnline ? '<span class="status-dot online"></span>' : '<span class="status-dot offline"></span>';
+    const stBadge = isOnline ? '<span class="badge badge-online">在線</span>' : '<span class="badge badge-offline">離線</span>';
+
+    // Forwards on this node
+    const nodeForwards = forwards.filter(f=>f.node_id===n.id);
+    // Inbounds on this node
+    const nodeInbounds = inbounds.filter(ib=>ib.node_id===n.id);
+    // Traffic for this node
+    const tr = trafficData.find(td=>td.node_id===n.id) || {};
+
+    h += `<div class="card" style="margin-bottom:16px">`;
+    h += `<h3>${stDot}${n.name} <span class="badge badge-${n.type}">${typeLabel(n.type)}</span> ${stBadge}</h3>`;
+
+    // Node stats row
+    if (isOnline) {
+      h += `<div class="stat-grid" style="margin-bottom:12px">`;
+      h += `<div class="stat-item"><div class="stat-value">${n.cpu_percent||0}%</div><div class="stat-label">CPU</div></div>`;
+      h += `<div class="stat-item"><div class="stat-value">${n.mem_percent||0}%</div><div class="stat-label">RAM</div></div>`;
+      h += `<div class="stat-item"><div class="stat-value">${fmtSpeed(n.net_rx_speed||0)}</div><div class="stat-label">↓ 下載</div></div>`;
+      h += `<div class="stat-item"><div class="stat-value">${fmtSpeed(n.net_tx_speed||0)}</div><div class="stat-label">↑ 上傳</div></div>`;
+      h += `</div>`;
+    }
+
+    // Forward tunnels — port type
+    const portFwds = nodeForwards.filter(f=>!f.forward_type||f.forward_type==='port');
+    if (portFwds.length) {
+      h += `<div style="font-size:14px;color:var(--muted);margin-bottom:4px">🔗 端口轉發（${portFwds.length}）</div>`;
+      h += `<table style="margin-bottom:8px;font-size:13px"><thead><tr><th>監聽</th><th>→ 遠端</th><th>TLS</th><th>限速</th><th>狀態</th></tr></thead><tbody>`;
+      for (const f of portFwds) {
+        const active = isOnline && f.enabled;
+        const fStatus = active ? '<span style="color:var(--green)">● 啟用</span>' : '<span style="color:var(--red)">● 停用</span>';
+        h += `<tr>
+          <td style="white-space:nowrap"><code>${f.listen_addr}</code></td>
+          <td style="white-space:nowrap"><code>${f.remote_addr}</code></td>
+          <td style="white-space:nowrap">${f.tls_mode==='none'?'—':f.tls_mode}</td>
+          <td style="white-space:nowrap">${f.rate_limit?f.rate_limit+' KB/s':'不限'}</td>
+          <td style="white-space:nowrap">${fStatus}</td>
+        </tr>`;
+      }
+      h += '</tbody></table>';
+    }
+    // Tunnel forwards
+    const tunFwds = nodeForwards.filter(f=>f.forward_type==='tunnel');
+    if (tunFwds.length) {
+      const tunnels = {};
+      for (const f of tunFwds) {
+        const tid = f.tunnel_id || f.id;
+        if (!tunnels[tid]) tunnels[tid] = [];
+        tunnels[tid].push(f);
+      }
+      h += `<div style="font-size:14px;color:var(--muted);margin-bottom:4px">🔐 隧道轉發（${Object.keys(tunnels).length}）</div>`;
+      h += `<table style="margin-bottom:8px;font-size:12px"><thead><tr><th>隧道</th><th>監聽</th><th>→ 遠端</th><th>TLS</th><th>狀態</th></tr></thead><tbody>`;
+      for (const [tid, fwds] of Object.entries(tunnels)) {
+        for (const f of fwds) {
+          const active = isOnline && f.enabled;
+          const fStatus = active ? '<span style="color:var(--green)">● 啟用</span>' : '<span style="color:var(--red)">● 停用</span>';
+          h += `<tr>
+            <td style="white-space:nowrap"><code style="font-size:11px">${tid}</code></td>
+            <td style="white-space:nowrap"><code>${f.listen_addr}</code></td>
+            <td style="white-space:nowrap"><code>${f.remote_addr}</code></td>
+            <td style="white-space:nowrap"><span class="badge badge-online">${f.tls_mode}</span></td>
+            <td style="white-space:nowrap">${fStatus}</td>
+          </tr>`;
+        }
+      }
+      h += '</tbody></table>';
+    }
+
+    // Inbounds
+    if (nodeInbounds.length) {
+      h += `<div style="font-size:12px;color:var(--muted);margin-bottom:4px">🛡 入站服務（${nodeInbounds.length}）</div>`;
+      h += `<table style="margin-bottom:8px;font-size:12px"><thead><tr><th>埠號</th><th>協定</th><th>限速</th><th>狀態</th></tr></thead><tbody>`;
+      for (const ib of nodeInbounds) {
+        const active = isOnline && ib.enabled;
+        const sStatus = active ? '<span style="color:var(--green)">● 啟用</span>' : '<span style="color:var(--red)">● 停用</span>';
+        h += `<tr>
+          <td style="white-space:nowrap">${ib.port}</td>
+          <td style="white-space:nowrap">${ib.protocol}</td>
+          <td style="white-space:nowrap">${ib.rate_limit?ib.rate_limit+' KB/s':'不限'}</td>
+          <td style="white-space:nowrap">${sStatus}</td>
+        </tr>`;
+      }
+      h += '</tbody></table>';
+    }
+
+    // No services
+    if (!nodeForwards.length && !nodeInbounds.length) {
+      h += `<div style="font-size:12px;color:var(--muted);padding:8px 0">尚無轉發或代理規則</div>`;
+    }
+
+    h += '</div>';
+  }
+
+  document.getElementById('app').innerHTML = h;
+}
+
+function renderNodes() {
+  let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2>節點管理</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleBatchMode()">${batchMode?'關閉批量':'批量操作'}</button>
+      <button class="btn btn-primary" onclick="showAddNode()">＋ 新增節點</button>
+    </div>
+  </div><table><thead><tr>
+    ${batchMode?'<th><input type="checkbox" class="batch-check-all" '+(selectedItems.size===nodes.length?'checked':'')+' onchange="selectAll(nodes.map(n=>n.id),this.checked)"></th>':''}
+    <th>ID</th><th>名稱</th><th>類型</th><th>主機</th><th>狀態</th><th>CPU</th><th>RAM</th><th>Agent</th><th>操作</th>
+  </tr></thead><tbody>`;
+
+  for (const n of nodes) {
+    const st = n.status==='online'?`<span class="badge badge-online">在線</span>`:`<span class="badge badge-offline">離線</span>`;
+    const typeBadge = n.type==='entry'?'badge-entry':n.type==='transit'?'badge-transit':'badge-landing';
+    const agentStatus = n.agent_deployed==1?'✓ 已部署':n.agent_deployed==2?'部署中…':'未部署';
+    h += `<tr>
+      ${batchMode?`<td><input type="checkbox" class="batch-check" ${selectedItems.has(n.id)?'checked':''} onchange="toggleSelect('${n.id}')"></td>`:''}
+      <td style="white-space:nowrap"><code style="font-size:11px">${n.id}</code></td>
+      <td style="white-space:nowrap"><strong>${n.name}</strong></td>
+      <td style="white-space:nowrap"><span class="badge ${typeBadge}">${typeLabel(n.type)}</span></td>
+      <td style="white-space:nowrap">${n.host}${n.entry_ip?`<br><small style="color:var(--muted)">→ ${n.entry_ip}:${n.port_start||''}-${n.port_end||''}</small>`:''}</td>
+      <td style="white-space:nowrap">${st}</td>
+      <td style="white-space:nowrap">${n.cpu_percent||0}%</td>
+      <td style="white-space:nowrap">${n.mem_percent||0}%</td>
+      <td style="white-space:nowrap">${agentStatus}</td>
+      <td style="white-space:nowrap">
+        ${n.ssh_password?`<button class="btn btn-primary btn-sm" onclick="openDeploy('${n.id}','${n.name}')">部署</button>`:''}
+        <button class="btn btn-ghost btn-sm" onclick="copyInstallCmd('${n.id}')" title="複製手動安裝指令">📋 安裝指令</button>
+        <button class="btn btn-ghost btn-sm" onclick="editNode('${n.id}')">編輯</button> <button class="btn btn-danger btn-sm" onclick="delNode('${n.id}')">刪除</button>
+      </td>
+    </tr>`;
+  }
+  h += '</tbody></table>';
+  if (batchMode) h += batchToolbar('nodes', nodes);
+  document.getElementById('app').innerHTML = h;
+}
+
+let fwdTab = 'port';  // 'port' or 'tunnel'
+
+function renderForwards() {
+  let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div class="tabs">
+      <div class="tab ${fwdTab==='port'?'active':''}" onclick="fwdTab='port';selectedItems.clear();batchMode=false;render()">端口轉發</div>
+      <div class="tab ${fwdTab==='tunnel'?'active':''}" onclick="fwdTab='tunnel';selectedItems.clear();batchMode=false;render()">隧道轉發</div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleBatchMode()">${batchMode?'關閉批量':'批量操作'}</button>`;
+
+  if (fwdTab === 'port') {
+    h += `<button class="btn btn-primary" onclick="showAddForward()">＋ 新增端口轉發</button>`;
+    h += '</div>';
+    h += '</div>';
+    const portForwards = forwards.filter(f=>!f.forward_type || f.forward_type==='port');
+    h += '<table><thead><tr>' + (batchMode?'<th><input type="checkbox" class="batch-check-all" '+(selectedItems.size===getPortForwardIds().length?'checked':'')+' onchange="selectAll(getPortForwardIds(),this.checked)"></th>':'') + '<th>節點</th><th>監聽</th><th>→ 遠端</th><th>TLS</th><th>限速</th><th>操作</th></tr></thead><tbody>';
+    for (const f of portForwards) {
+      const node = nodes.find(n=>n.id===f.node_id);
+      h += `<tr>
+        ${batchMode?`<td><input type="checkbox" class="batch-check" ${selectedItems.has(f.id)?'checked':''} onchange="toggleSelect('${f.id}')"></td>`:''}
+        <td style="white-space:nowrap">${node?node.name:f.node_id}</td>
+        <td style="white-space:nowrap"><code>${f.listen_addr}</code></td>
+        <td style="white-space:nowrap"><code>${f.remote_addr}</code></td>
+        <td style="white-space:nowrap">${f.tls_mode==='none'?'—':f.tls_mode}</td>
+        <td style="white-space:nowrap">${f.rate_limit?f.rate_limit+' KB/s':'不限速'}</td>
+        <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editForward('${f.id}')">編輯</button> <button class="btn btn-ghost btn-sm" onclick="testTcping('${f.id}')">檢測</button> <button class="btn btn-danger btn-sm" onclick="delForward('${f.id}')">刪除</button></td>
+      </tr>`;
+    }
+    h += '</tbody></table>';
+    if (batchMode) h += batchToolbar('forwards', forwards.filter(f=>!f.forward_type||f.forward_type==='port'));
+
+  } else {
+    h += `<button class="btn btn-primary" onclick="showAddTunnel()">＋ 新增隧道</button>`;
+    h += '</div>';
+    h += '</div>';
+    const tunnels = {};
+    for (const f of forwards.filter(f=>f.forward_type==='tunnel')) {
+      const tid = f.tunnel_id || f.id;
+      if (!tunnels[tid]) tunnels[tid] = [];
+      tunnels[tid].push(f);
+    }
+    h += '<table><thead><tr>' + (batchMode?'<th><input type="checkbox" class="batch-check-all" '+(selectedItems.size===getTunnelIds().length?'checked':'')+' onchange="selectAll(getTunnelIds(),this.checked)"></th>':'') + '<th>隧道 ID</th><th>入口 → 出口</th><th>出口 → 落地</th><th>TLS</th><th>限速</th><th>操作</th></tr></thead><tbody>';
+    for (const [tid, fwds] of Object.entries(tunnels)) {
+      const fwd1 = fwds.find(f=>nodes.find(n=>n.id===f.node_id)?.type==='entry') || fwds[0];
+      const fwd2 = fwds.find(f=>f.id!==fwd1.id) || {};
+      const entryNode = nodes.find(n=>n.id===fwd1.node_id);
+      const exitNode = fwd2.node_id ? nodes.find(n=>n.id===fwd2.node_id) : null;
+      h += `<tr>
+        ${batchMode?`<td><input type="checkbox" class="batch-check" ${selectedItems.has(tid)?'checked':''} onchange="toggleSelect('${tid}')"></td>`:''}
+        <td style="white-space:nowrap"><code style="font-size:10px">${tid}</code></td>
+        <td style="white-space:nowrap"><small>${entryNode?.name||'?'}</small> <code>${fwd1.listen_addr}</code> → <code>${fwd1.remote_addr}</code></td>
+        <td style="white-space:nowrap"><small>${exitNode?.name||'?'}</small> <code>${fwd2.listen_addr||'—'}</code> → <code>${fwd2.remote_addr||'—'}</code></td>
+        <td style="white-space:nowrap"><span class="badge badge-online">${fwd1.tls_mode}</span></td>
+        <td style="white-space:nowrap">${fwd1.rate_limit?fwd1.rate_limit+' KB/s':'不限速'}</td>
+        <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editTunnel('${tid}')">編輯</button> <button class="btn btn-ghost btn-sm" onclick="testTcping('${fwd1.id}')">檢測</button> <button class="btn btn-danger btn-sm" onclick="delTunnel('${tid}')">刪除</button></td>
+      </tr>`;
+    }
+    h += '</tbody></table>';
+    if (batchMode) h += batchToolbar('forwards', Object.keys(tunnels).map(tid => ({tunnel_id: tid, id: tid})));
+  }
+  document.getElementById('app').innerHTML = h;
+}
+
+function showAddTunnel() {
+  editingTunnelId = null;
+  document.querySelector('#addTunnelModal h2').textContent = '新增隧道轉發';
+  document.querySelector('#addTunnelForm .btn-primary').textContent = '建立隧道';
+  const entrySel = document.querySelector('#addTunnelForm [name="entry_node_id"]');
+  entrySel.innerHTML = nodes.filter(n=>n.type==='entry').map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  const exitSel = document.querySelector('#addTunnelForm [name="exit_node_id"]');
+  exitSel.innerHTML = nodes.filter(n=>n.type==='transit').map(n=>`<option value="${n.id}">${n.name}（${n.host}）</option>`).join('');
+  document.getElementById('addTunnelForm').reset();
+  document.getElementById('addTunnelModal').classList.add('active');
+}
+
+document.getElementById('addTunnelForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd);
+  try {
+    if (editingTunnelId) {
+      const tunnelFwds = forwards.filter(f=>f.tunnel_id===editingTunnelId);
+      for (const f of tunnelFwds) {
+        await api(`/api/forwards/${f.id}`, {method:'DELETE'});
+      }
+      editingTunnelId = null;
+    }
+    await api('/api/forwards/tunnel', {method:'POST',body:JSON.stringify(data)});
+  } catch(err) {
+    alert('儲存失敗：' + err.message);
+  } finally {
+    closeModal('addTunnelModal');
+  }
+  await fetchForwards();
+  render();
+});
+
+async function delTunnel(tid) {
+  if(!confirm('刪除整條隧道（含入口+出口規則）？')) return;
+  await api('/api/forwards/tunnel/' + tid, {method:'DELETE'});
+  await fetchForwards();
+  render();
+}
+
+function renderSS() {
+  let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2>入站代理 (Sing-box)</h2>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="toggleBatchMode()">${batchMode?'關閉批量':'批量操作'}</button>
+      <button class="btn btn-ghost btn-sm" onclick="syncAllInbounds()">🔄 同步全部</button>
+      <button class="btn btn-primary" onclick="showAddInbound()">＋ 新增入站</button>
+    </div>
+  </div><table><thead><tr>
+    ${batchMode?'<th><input type="checkbox" class="batch-check-all" '+(selectedItems.size===inbounds.length?'checked':'')+' onchange="selectAll(inbounds.map(i=>i.id),this.checked)"></th>':''}
+    <th>節點</th><th>協定</th><th>埠號</th><th>標籤</th><th>傳輸</th><th>TLS</th><th>限速</th><th>操作</th>
+  </tr></thead><tbody>`;
+
+  for (const ib of inbounds) {
+    const node = nodes.find(n=>n.id===ib.node_id);
+    const proto = ib.protocol || 'ss';
+    const stream = ib.stream || {};
+    const transport = (stream.network||'tcp')==='tcp' ? '—' : stream.network;
+    const tls = (stream.tls||{}).enabled ? '<span style="color:var(--green)">✓</span>' : '—';
+    h += `<tr>
+      ${batchMode?`<td><input type="checkbox" class="batch-check" ${selectedItems.has(ib.id)?'checked':''} onchange="toggleSelect('${ib.id}')"></td>`:''}
+      <td style="white-space:nowrap">${node?node.name:ib.node_id}</td>
+      <td style="white-space:nowrap"><span class="badge badge-online">${proto}</span></td>
+      <td style="white-space:nowrap">${ib.port}</td>
+      <td style="white-space:nowrap"><code style="font-size:11px">${ib.tag||''}</code></td>
+      <td style="white-space:nowrap">${transport}</td>
+      <td style="white-space:nowrap">${tls}</td>
+      <td style="white-space:nowrap">${ib.rate_limit?ib.rate_limit+' KB/s':'不限速'}</td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editInbound('${ib.id}')">編輯</button> <button class="btn btn-ghost btn-sm" onclick="syncInboundNode('${ib.node_id}')">同步</button> <button class="btn btn-danger btn-sm" onclick="delInbound('${ib.id}')">刪除</button></td>
+    </tr>`;
+  }
+  h += '</tbody></table>';
+  if (batchMode) h += batchToolbar('inbounds', inbounds);
+  document.getElementById('app').innerHTML = h;
+}
+
+async function syncInboundNode(nodeId) {
+  try {
+    await api('/api/inbounds/sync/' + nodeId, {method:'POST'});
+    alert('同步成功！');
+  } catch(e) { alert('同步失敗: ' + e.message); }
+}
+
+async function syncAllInbounds() {
+  const synced = new Set();
+  let count = 0;
+  for (const ib of inbounds) {
+    if (!synced.has(ib.node_id)) {
+      synced.add(ib.node_id);
+      try {
+        await api('/api/inbounds/sync/' + ib.node_id, {method:'POST'});
+        count++;
+      } catch(e) {}
+    }
+  }
+  alert(`已同步 ${count} 個節點`);
+}
+
+const PROTO_FIELDS = {
+  shadowsocks: `<select name="ss_method"><optgroup label="傳統加密"><option value="aes-128-gcm">aes-128-gcm</option><option value="aes-192-gcm">aes-192-gcm</option><option value="aes-256-gcm">aes-256-gcm</option><option value="chacha20-ietf-poly1305">chacha20-ietf-poly1305</option></optgroup><optgroup label="SS 2022"><option value="2022-blake3-aes-128-gcm">2022-blake3-aes-128-gcm</option><option value="2022-blake3-aes-256-gcm" selected>2022-blake3-aes-256-gcm</option><option value="2022-blake3-chacha20-poly1305">2022-blake3-chacha20-poly1305</option></optgroup></select><input name="ss_password" placeholder="密碼" required>`,
+  vmess: `<input name="vmess_uuid" placeholder="UUID" required>`,
+  vless: `<input name="vless_uuid" placeholder="UUID" required><input name="vless_flow" placeholder="Flow（xtls-rprx-vision）">`,
+  trojan: `<input name="trojan_password" placeholder="密碼" required>`,
+  hysteria2: `<input name="hy_password" placeholder="密碼" required><div class="form-row"><input name="hy_up" type="number" placeholder="上行 Mbps" value="100"><input name="hy_down" type="number" placeholder="下行 Mbps" value="100"></div>`,
+  hysteria: `<input name="hy_password" placeholder="密碼" required><div class="form-row"><input name="hy_up" type="number" placeholder="上行 Mbps" value="100"><input name="hy_down" type="number" placeholder="下行 Mbps" value="100"></div>`,
+  tuic: `<input name="tuic_uuid" placeholder="UUID" required><input name="tuic_password" placeholder="密碼" required><input name="tuic_congestion" placeholder="擁塞控制（預設 bbr）" value="bbr">`,
+  wireguard: `<input name="wg_private_key" placeholder="伺服器私鑰" required><input name="wg_public_key" placeholder="客戶端公鑰"><input name="wg_address" placeholder="WG 位址（例：10.0.0.1/24）"><input name="wg_mtu" type="number" placeholder="MTU（預設 1420）" value="1420">`,
+  anytls: `<input name="anytls_password" placeholder="密碼" required>`,
+  socks: `<input name="socks_user" placeholder="使用者名稱（選填）"><input name="socks_pass" placeholder="密碼（選填）">`,
+  http: `<input name="http_user" placeholder="使用者名稱（選填）"><input name="http_pass" placeholder="密碼（選填）">`,
+};
+
+function onProtocolChange() {
+  const proto = document.querySelector('#addInboundForm [name="protocol"]').value;
+  const fields = document.getElementById('protoFields');
+  const stream = document.getElementById('streamFields');
+  if (PROTO_FIELDS[proto]) {
+    fields.innerHTML = PROTO_FIELDS[proto];
+    fields.style.display = 'block';
+  } else {
+    fields.style.display = 'none';
+  }
+  // Show stream for all except socks/http
+  stream.style.display = (proto==='socks'||proto==='http') ? 'none' : 'block';
+}
+
+function onStreamChange() {
+  const net = document.querySelector('#addInboundForm [name="stream_network"]').value;
+  const extra = document.getElementById('streamExtra');
+  if (net === 'tcp') {
+    extra.style.display = 'none';
+  } else {
+    extra.style.display = 'block';
+    // Show/hide gRPC service name
+    const svc = document.querySelector('#addInboundForm [name="stream_service"]');
+    svc.style.display = net==='grpc' ? 'block' : 'none';
+    const path = document.querySelector('#addInboundForm [name="stream_path"]');
+    path.style.display = net==='grpc' ? 'none' : 'block';
+    const host = document.querySelector('#addInboundForm [name="stream_host"]');
+    host.style.display = net==='grpc' ? 'none' : 'block';
+  }
+}
+
+function showAddInbound() {
+  editingId = null;
+  document.getElementById('inboundModalTitle').textContent = '新增入站';
+  document.getElementById('inboundFormSubmit').textContent = '建立入站';
+  const form = document.getElementById('addInboundForm');
+  form.reset();
+  form.editing_inbound_id.value = '';
+  const sel = form.node_id;
+  sel.innerHTML = nodes.filter(n=>n.type==='landing').map(n=>`<option value="${n.id}">${n.name}</option>`).join('');
+  onProtocolChange();
+  document.getElementById('addInboundModal').classList.add('active');
+}
+
+function editInbound(id) {
+  const ib = inbounds.find(x=>x.id===id);
+  if (!ib) return;
+  editingId = id;
+  document.getElementById('inboundModalTitle').textContent = '編輯入站';
+  document.getElementById('inboundFormSubmit').textContent = '儲存修改';
+  const form = document.getElementById('addInboundForm');
+  form.editing_inbound_id.value = id;
+  // Node dropdown
+  form.node_id.innerHTML = nodes.filter(n=>n.type==='landing').map(n=>`<option value="${n.id}" ${n.id===ib.node_id?'selected':''}>${n.name}</option>`).join('');
+  form.protocol.value = ib.protocol || 'shadowsocks';
+  form.port.value = ib.port || '';
+  form.tag.value = ib.tag || '';
+  form.rate_limit.value = ib.rate_limit || 0;
+
+  // Trigger protocol-specific fields
+  onProtocolChange();
+  // Pre-fill protocol fields
+  const settings = ib.settings || {};
+  const proto = ib.protocol;
+  if (proto==='shadowsocks') {
+    setTimeout(()=>{
+      if(form.ss_method) form.ss_method.value = settings.method || '2022-blake3-aes-256-gcm';
+      if(form.ss_password) form.ss_password.placeholder = '留空不修改';
+    }, 50);
+  } else if (proto==='vmess') {
+    setTimeout(()=>{ if(form.vmess_uuid) form.vmess_uuid.value = settings.uuid||''; }, 50);
+  } else if (proto==='vless') {
+    setTimeout(()=>{ if(form.vless_uuid) form.vless_uuid.value = settings.uuid||''; if(form.vless_flow) form.vless_flow.value = settings.flow||''; }, 50);
+  } else if (proto==='trojan') {
+    setTimeout(()=>{ if(form.trojan_password) form.trojan_password.placeholder = '留空不修改'; }, 50);
+  } else if (proto==='hysteria2'||proto==='hysteria') {
+    setTimeout(()=>{
+      if(form.hy_password) form.hy_password.placeholder = '留空不修改';
+      if(form.hy_up) form.hy_up.value = settings.up_mbps||100;
+      if(form.hy_down) form.hy_down.value = settings.down_mbps||100;
+    }, 50);
+  } else if (proto==='tuic') {
+    setTimeout(()=>{
+      if(form.tuic_uuid) form.tuic_uuid.value = settings.uuid||'';
+      if(form.tuic_password) form.tuic_password.placeholder = '留空不修改';
+      if(form.tuic_congestion) form.tuic_congestion.value = settings.congestion||'bbr';
+    }, 50);
+  } else if (proto==='wireguard') {
+    setTimeout(()=>{
+      if(form.wg_private_key) form.wg_private_key.value = settings.private_key||'';
+      if(form.wg_public_key) form.wg_public_key.value = settings.public_key||'';
+      if(form.wg_address) form.wg_address.value = settings.address||'';
+      if(form.wg_mtu) form.wg_mtu.value = settings.mtu||1420;
+    }, 50);
+  } else if (proto==='anytls') {
+    setTimeout(()=>{ if(form.anytls_password) form.anytls_password.placeholder = '留空不修改'; }, 50);
+  } else if (proto==='socks') {
+    setTimeout(()=>{ if(form.socks_user) form.socks_user.value = settings.username||''; if(form.socks_pass) form.socks_pass.placeholder = '留空不修改'; }, 50);
+  } else if (proto==='http') {
+    setTimeout(()=>{ if(form.http_user) form.http_user.value = settings.username||''; if(form.http_pass) form.http_pass.placeholder = '留空不修改'; }, 50);
+  }
+
+  // Stream settings
+  const stream = ib.stream || {};
+  form.stream_network.value = stream.network || 'tcp';
+  onStreamChange();
+  if (stream.network && stream.network!=='tcp') {
+    setTimeout(()=>{
+      if(form.stream_path) form.stream_path.value = stream.path||(stream.ws||{}).path||(stream.xhttp||{}).path||'';
+      if(form.stream_host) form.stream_host.value = stream.host||(stream.ws||{}).host||(stream.xhttp||{}).host||'';
+      if(form.stream_service) form.stream_service.value = (stream.grpc||{}).service_name||'';
+    }, 50);
+  }
+
+  // TLS
+  const tls = stream.tls || {};
+  form.tls_enabled.checked = tls.enabled ? true : false;
+  document.getElementById('tlsExtra').style.display = tls.enabled ? 'block' : 'none';
+  if (tls.enabled) {
+    form.tls_server_name.value = tls.server_name || '';
+    form.tls_cert_path.value = tls.certificate_path || '';
+    form.tls_key_path.value = tls.key_path || '';
+  }
+  // Reality
+  const reality = tls.reality || {};
+  form.reality_enabled.checked = reality.enabled ? true : false;
+  document.getElementById('realityExtra').style.display = reality.enabled ? 'block' : 'none';
+  if (reality.enabled) {
+    form.reality_private_key.value = reality.private_key || '';
+    form.reality_short_id.value = (reality.short_id||[''])[0] || '';
+    form.reality_server_name.value = (reality.server_name||[''])[0] || '';
+  }
+
+  document.getElementById('addInboundModal').classList.add('active');
+}
+
+async function delInbound(id) {
+  if(!confirm('確定要刪除此入站？')) return;
+  await api('/api/inbounds/' + id, {method:'DELETE'});
+  inbounds = await api('/api/inbounds');
+  render();
+}
+
+document.getElementById('addInboundForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const proto = fd.get('protocol');
+  // Build settings
+  const settings = {};
+  if (proto==='shadowsocks') {
+    settings.method = fd.get('ss_method')||'2022-blake3-aes-256-gcm';
+    if (fd.get('ss_password')) settings.password = fd.get('ss_password');
+  } else if (proto==='vmess') {
+    settings.uuid = fd.get('vmess_uuid')||'';
+  } else if (proto==='vless') {
+    settings.uuid = fd.get('vless_uuid')||'';
+    if (fd.get('vless_flow')) settings.flow = fd.get('vless_flow');
+  } else if (proto==='trojan') {
+    if (fd.get('trojan_password')) settings.password = fd.get('trojan_password');
+  } else if (proto==='hysteria2'||proto==='hysteria') {
+    if (fd.get('hy_password')) settings.password = fd.get('hy_password');
+    settings.up_mbps = parseInt(fd.get('hy_up'))||100;
+    settings.down_mbps = parseInt(fd.get('hy_down'))||100;
+  } else if (proto==='tuic') {
+    settings.uuid = fd.get('tuic_uuid')||'';
+    if (fd.get('tuic_password')) settings.password = fd.get('tuic_password');
+    settings.congestion = fd.get('tuic_congestion')||'bbr';
+  } else if (proto==='wireguard') {
+    settings.private_key = fd.get('wg_private_key')||'';
+    settings.public_key = fd.get('wg_public_key')||'';
+    settings.address = fd.get('wg_address')||'';
+    settings.mtu = parseInt(fd.get('wg_mtu'))||1420;
+  } else if (proto==='anytls') {
+    if (fd.get('anytls_password')) settings.password = fd.get('anytls_password');
+  } else if (proto==='socks') {
+    if (fd.get('socks_user')) { settings.username = fd.get('socks_user'); if(fd.get('socks_pass')) settings.password = fd.get('socks_pass'); }
+  } else if (proto==='http') {
+    if (fd.get('http_user')) { settings.username = fd.get('http_user'); if(fd.get('http_pass')) settings.password = fd.get('http_pass'); }
+  }
+
+  // Build stream
+  const network = fd.get('stream_network')||'tcp';
+  const stream = {network};
+  if (network!=='tcp') {
+    if (network==='ws') stream.ws = {path: fd.get('stream_path')||'/', host: fd.get('stream_host')||''};
+    else if (network==='grpc') stream.grpc = {service_name: fd.get('stream_service')||''};
+    else if (network==='http') stream.h2 = {path: fd.get('stream_path')||'', host: fd.get('stream_host')||''};
+    else if (network==='xhttp') stream.xhttp = {path: fd.get('stream_path')||'/', host: fd.get('stream_host')||''};
+  }
+
+  // TLS
+  if (fd.get('tls_enabled')) {
+    stream.tls = {enabled: true};
+    if (fd.get('tls_server_name')) stream.tls.server_name = fd.get('tls_server_name');
+    if (fd.get('tls_cert_path')) stream.tls.certificate_path = fd.get('tls_cert_path');
+    if (fd.get('tls_key_path')) stream.tls.key_path = fd.get('tls_key_path');
+    // Reality
+    if (fd.get('reality_enabled')) {
+      stream.tls.reality = {enabled: true};
+      if (fd.get('reality_private_key')) stream.tls.reality.private_key = fd.get('reality_private_key');
+      if (fd.get('reality_short_id')) stream.tls.reality.short_id = fd.get('reality_short_id');
+      if (fd.get('reality_server_name')) stream.tls.reality.server_name = fd.get('reality_server_name');
+    }
+  }
+
+  const data = {
+    node_id: fd.get('node_id'),
+    protocol: proto,
+    tag: fd.get('tag')||'',
+    port: parseInt(fd.get('port')),
+    settings,
+    stream,
+    rate_limit: parseInt(fd.get('rate_limit'))||0,
+  };
+
+  const eid = fd.get('editing_inbound_id');
+  try {
+    if (eid) {
+      await api('/api/inbounds/' + eid, {method:'PUT', body: JSON.stringify(data)});
+      editingId = null;
+    } else {
+      await api('/api/inbounds', {method:'POST', body: JSON.stringify(data)});
+    }
+  } catch(err) {
+    alert('儲存失敗：' + err.message);
+  } finally {
+    closeModal('addInboundModal');
+  }
+  inbounds = await api('/api/inbounds');
+  render();
+});
+
+function renderTraffic() {
+  let h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2>流量統計</h2><button class="btn btn-danger" onclick="resetAllTraffic()">重置全部流量</button></div><table><thead><tr><th>節點</th><th>類型</th><th>總計 ↓</th><th>總計 ↑</th><th>本期 ↓</th><th>本期 ↑</th><th>上限</th><th>用量</th><th>剩餘</th><th>操作</th></tr></thead><tbody>';
+
+  for (const n of nodes) {
+    const t = trafficData.find(td=>td.node_id===n.id) || {};
+    const periodRx = t.period_rx_bytes||0, periodTx = t.period_tx_bytes||0;
+    const limit = t.period_limit_rx||t.period_limit_tx||0;
+    const usage = limit ? Math.round(Math.max(periodRx,periodTx)/limit*100) : 0;
+    h += `<tr>
+      <td style="white-space:nowrap">${n.name}</td>
+      <td style="white-space:nowrap"><span class="badge badge-${n.type}">${typeLabel(n.type)}</span></td>
+      <td style="white-space:nowrap">${fmtBytes(t.total_rx_bytes||0)}</td>
+      <td style="white-space:nowrap">${fmtBytes(t.total_tx_bytes||0)}</td>
+      <td style="white-space:nowrap">${fmtBytes(periodRx)}</td>
+      <td style="white-space:nowrap">${fmtBytes(periodTx)}</td>
+      <td style="white-space:nowrap">${limit?fmtBytes(limit):'不限'}</td>
+      <td style="white-space:nowrap">
+        <div style="width:80px">
+          <div class="traffic-bar"><div class="traffic-fill" style="width:${Math.min(usage,100)}%"></div></div>
+          <small style="color:var(--muted)">${usage}%</small>
+        </div>
+      </td>
+      <td style="font-size:12px;color:var(--muted)">${getRemaining(t.reset_day ?? 1)}</td>
+      <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="showTrafficEdit('${n.id}')">編輯</button> <button class="btn btn-primary btn-sm" onclick="resetTraffic('${n.id}')">重置</button></td>
+    </tr>`;
+  }
+  h += '</tbody></table>';
+  document.getElementById('app').innerHTML = h;
+}
+
+function renderUsers() {
+  var h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2>帳號管理</h2><div style="display:flex;gap:8px"><button class="btn btn-ghost btn-sm" onclick="showEditProfile()">編輯個人資料</button><button class="btn btn-ghost btn-sm" onclick="showChangePw()">修改密碼</button><button class="btn btn-primary" onclick="showAddUser()">＋ 新增帳號</button></div></div>';
+  h += '<table><thead><tr><th>頭像</th><th>使用者名稱</th><th>顯示名稱</th><th>角色</th><th>授權分組</th><th>建立時間</th><th>操作</th></tr></thead><tbody>';
+  for (var i = 0; i < users.length; i++) {
+    var u = users[i];
+    var date = new Date(u.created_at * 1000).toLocaleDateString('zh-TW');
+    var roleLabel = u.role === 'admin' ? '<span style="color:var(--accent);font-weight:600">管理員</span>' : '<span style="color:var(--muted)">普通用戶</span>';
+    h += '<tr>';
+    h += '<td>' + avatarHtml(u) + '</td>';
+    h += '<td><strong>' + u.username + '</strong></td>';
+    h += '<td>' + (u.display_name || '—') + '</td>';
+    h += '<td>' + roleLabel + '</td>';
+    h += '<td><span id="userGroups-' + u.id + '" style="font-size:12px;color:var(--muted)">…</span></td>';
+    h += '<td style="white-space:nowrap">' + date + '</td>';
+    h += '<td style="white-space:nowrap">';
+    h += '<button class="btn btn-ghost btn-sm" onclick="toggleUserSettings(' + u.id + ')" style="color:var(--accent);border-color:rgba(255,255,255,.1)">設定</button>';
+    if (u.id !== currentUser.id) {
+      h += ' <button class="btn btn-danger btn-sm" onclick="delUser(' + u.id + ')">刪除</button>';
+    } else {
+      h += ' <span style="color:var(--muted);font-size:11px">目前帳號</span>';
+    }
+    h += '</td></tr>';
+    h += '<tr id="userSettings-' + u.id + '" style="display:none"><td colspan="7"><div style="padding:16px;background:rgba(255,255,255,.02);border-radius:var(--radius)"></div></td></tr>';
+  }
+  h += '</tbody></table>';
+  document.getElementById('app').innerHTML = h;
+  loadUserGroups();
+}
+
+async function toggleUserSettings(userId) {
+  var row = document.getElementById('userSettings-' + userId);
+  if (!row) return;
+  if (row.style.display !== 'none') { row.style.display = 'none'; return; }
+
+  var cell = row.querySelector('td div');
+  cell.innerHTML = '<div style="padding:12px;color:var(--muted)">載入中…</div>';
+  row.style.display = '';
+
+  var u = users.find(function(x) { return x.id === userId; });
+  if (!u) return;
+  var userRole = u.role || 'user';
+  var gidsResp = await api('/api/users/' + userId + '/groups');
+  var gids = gidsResp.groups || gidsResp || [];
+  var idSet = new Set(Array.isArray(gids) ? gids : []);
+
+  var h = '<div style="display:flex;gap:30px;flex-wrap:wrap">';
+
+  // ── Role ──
+  h += '<div><div style="color:var(--muted);font-size:12px;margin-bottom:8px">帳號身份</div>';
+  h += '<label style="display:inline-flex;align-items:center;gap:4px;margin-right:16px;cursor:pointer;font-size:14px">';
+  h += '<input type="radio" name="userRole-' + userId + '" value="admin" ' + (userRole === 'admin' ? 'checked' : '') + ' onchange="setUserRole(' + userId + ',\'admin\')" style="width:auto;margin:0;accent-color:var(--accent)"> 管理員</label>';
+  h += '<label style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;font-size:14px">';
+  h += '<input type="radio" name="userRole-' + userId + '" value="user" ' + (userRole === 'user' ? 'checked' : '') + ' onchange="setUserRole(' + userId + ',\'user\')" style="width:auto;margin:0;accent-color:var(--accent)"> 普通用戶</label></div>';
+
+  // ── Groups ──
+  var trafficLimits = {};
+  try {
+    var tl = await api('/api/users/' + userId + '/traffic-limits');
+    trafficLimits = tl || {};
+  } catch(e) {}
+
+  h += '<div style="flex:1"><div style="color:var(--muted);font-size:12px;margin-bottom:8px">授權分組</div>';
+  if (!groups.length) {
+    h += '<span style="color:var(--muted)">尚無分組</span>';
+  } else {
+    for (var i = 0; i < groups.length; i++) {
+      var g = groups[i];
+      var limitGb = (trafficLimits[g.id] || 0) / 1073741824;
+      h += '<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)">';
+      h += '<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:14px;flex:1">';
+      h += '<input type="checkbox" ' + (idSet.has(g.id) ? 'checked' : '') + ' onchange="toggleUserGroupMember(' + userId + ',\'' + g.id + '\',this.checked)" style="width:auto;margin:0;accent-color:var(--accent)"> ';
+      h += g.name + '</label>';
+      h += '<input type="number" value="' + (limitGb > 0 ? limitGb.toFixed(1) : '') + '" placeholder="不限" min="0" step="0.1" style="width:80px;margin:0;padding:4px 8px;font-size:12px" onchange="setUserTrafficLimit(' + userId + ',\'' + g.id + '\',this.value)" title="流量上限 (GB)">';
+      h += '<span style="font-size:10px;color:var(--muted);white-space:nowrap">GB</span></div>';
+    }
+  }
+  h += '</div></div>';
+
+  cell.innerHTML = h;
+}
+
+async function setUserRole(userId, role) {
+  await api('/api/users/' + userId + '/role', {method: 'PUT', body: JSON.stringify({role: role})});
+  var u = users.find(function(x) { return x.id === userId; });
+  if (u) u.role = role;
+  render();
+}
+
+async function loadUserGroups() {
+  for (const u of users) {
+    const el = document.getElementById('userGroups-' + u.id);
+    if (!el) continue;
+    try {
+      const resp = await api('/api/users/' + u.id + '/groups');
+      const gids = resp.groups || resp || [];
+      const idSet = new Set(Array.isArray(gids) ? gids : []);
+      const names = groups.filter(function(g) { return idSet.has(g.id); }).map(function(g) { return g.name; });
+      el.textContent = names.length ? names.join(', ') : '—';
+      el.style.color = names.length ? 'var(--accent)' : 'var(--muted)';
+    } catch(e) { el.textContent = '—'; }
+  }
+}
+
+async function toggleUserGroupMember(userId, groupId, add) {
+  var currentUsers = await api('/api/groups/' + groupId + '/users');
+  var userIds = currentUsers.map(function(u) { return u.id; });
+  if (add) { userIds.push(userId); } else { userIds = userIds.filter(function(id) { return id !== userId; }); }
+  await api('/api/groups/' + groupId + '/users', {method: 'PUT', body: JSON.stringify({user_ids: userIds})});
+  loadUserGroups();
+}
+
+async function setUserTrafficLimit(userId, groupId, gb) {
+  var bytes = Math.round(parseFloat(gb) * 1073741824) || 0;
+  await api('/api/users/' + userId + '/traffic-limits', {
+    method: 'PUT',
+    body: JSON.stringify({group_id: groupId, traffic_limit_bytes: bytes})
+  });
+}
+
+function typeLabel(t) {
+  return t==='entry'?'入口':t==='transit'?'中轉':'落地';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 節點 CRUD
+// ══════════════════════════════════════════════════════════════════
+function showAddNode() {
+  editingId = null;
+  document.querySelector('#addNodeModal h2').textContent = '新增節點';
+  document.querySelector('#addNodeModal .btn-primary').textContent = '新增節點';
+  document.getElementById('addNodeForm').reset();
+  document.getElementById('addNodeModal').classList.add('active');
+}
+// (removed duplicate POST-only handler)
+async function delNode(id) {
+  if(!confirm('確定要刪除此節點？')) return;
+  await api(`/api/nodes/${id}`, {method:'DELETE'});
+  await fetchNodes();
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 轉發 CRUD
+// ══════════════════════════════════════════════════════════════════
+function showAddForward() {
+  editingId = null;
+  document.querySelector('#addForwardModal h2').textContent = '新增端口轉發';
+  document.querySelector('#addForwardModal .btn-primary').textContent = '新增端口轉發';
+  const sel = document.querySelector('#addForwardForm select[name="node_id"]');
+  sel.innerHTML = nodes.filter(n=>n.type!=='landing').map(n=>`<option value="${n.id}">${n.name}（${typeLabel(n.type)}）</option>`).join('');
+  const expSel = document.getElementById('exportNode');
+  expSel.innerHTML = '<option value="">— 快速選擇目標節點 —</option>' +
+    nodes.filter(n=>n.type!=='entry').map(n=>`<option value="${n.host}:${n.port_start||8443}">${n.name}（${typeLabel(n.type)}）→ ${n.host}:${n.port_start||8443}</option>`).join('');
+  document.getElementById('remoteAddr').value = '';
+  document.getElementById('addForwardModal').classList.add('active');
+}
+
+function autoFillRemote() {
+  const sel = document.getElementById('exportNode');
+  document.getElementById('remoteAddr').value = sel.value;
+}
+// (removed duplicate POST-only handler)
+async function delForward(id) {
+  if(!confirm('確定要刪除此轉發規則？')) return;
+  await api(`/api/forwards/${id}`, {method:'DELETE'});
+  await fetchForwards();
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// (SS CRUD replaced by Inbound CRUD above)
+// ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════
+// 帳號管理
+// ══════════════════════════════════════════════════════════════════
+function showAddUser() {
+  document.getElementById('addUserForm').reset();
+  document.getElementById('addUserModal').classList.add('active');
+}
+document.getElementById('addUserForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  await api('/api/users', {method:'POST',body:JSON.stringify(Object.fromEntries(fd))});
+  closeModal('addUserModal');
+  try { const r = await api('/api/users'); users = r.users || []; } catch(e) {}
+  render();
+});
+async function delUser(id) {
+  if(!confirm('確定要刪除此帳號？')) return;
+  await api(`/api/users/${id}`, {method:'DELETE'});
+  try { const r = await api('/api/users'); users = r.users || []; } catch(e) {}
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 個人資料編輯
+// ══════════════════════════════════════════════════════════════════
+function showEditProfile() {
+  document.getElementById('editProfileForm').reset();
+  document.getElementById('profileError').classList.remove('show');
+  // 預填目前值
+  document.querySelector('#editProfileForm [name="username"]').value = currentUser.username || '';
+  document.querySelector('#editProfileForm [name="display_name"]').value = currentUser.display_name || '';
+  document.querySelector('#editProfileForm [name="avatar_url"]').value = currentUser.avatar_url || '';
+  document.getElementById('editProfileModal').classList.add('active');
+}
+document.getElementById('editProfileForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = {};
+  for (const [k,v] of fd) if (v) body[k] = v;
+  const errEl = document.getElementById('profileError');
+  errEl.classList.remove('show');
+  try {
+    const res = await fetch('/api/auth/profile', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      if (res.status === 409) { errEl.textContent = '使用者名稱已被使用'; errEl.classList.add('show'); return; }
+      throw new Error(err.detail || '更新失敗');
+    }
+    const data = await res.json();
+    currentUser.username = data.user.username;
+    currentUser.display_name = data.user.display_name;
+    currentUser.avatar_url = data.user.avatar_url;
+    closeModal('editProfileModal');
+    updateHeader();
+    render();  // 純前端，直接從更新後的 currentUser 渲染
+  } catch(ex) {
+    errEl.textContent = ex.message;
+    errEl.classList.add('show');
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// 修改密碼
+// ══════════════════════════════════════════════════════════════════
+function showChangePw() {
+  document.getElementById('changePwForm').reset();
+  document.getElementById('changePwError').classList.remove('show');
+  document.getElementById('changePwModal').classList.add('active');
+}
+document.getElementById('changePwForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = Object.fromEntries(fd);
+  const errEl = document.getElementById('changePwError');
+  errEl.classList.remove('show');
+  try {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) { errEl.classList.add('show'); return; }
+    closeModal('changePwModal');
+    alert('密碼修改成功');
+  } catch(ex) {
+    errEl.classList.add('show');
+  }
+});
+
+// ══════════════════════════════════════════════════════════════════
+// 流量
+// ══════════════════════════════════════════════════════════════════
+async function resetTraffic(nodeId) {
+  await api(`/api/traffic/reset/${nodeId}`, {method:'POST'});
+  await fetchTraffic();
+  render();
+}
+async function resetAllTraffic() {
+  if(!confirm('確定要重置全部流量？')) return;
+  await api('/api/traffic/reset-all', {method:'POST'});
+  await fetchTraffic();
+  render();
+}
+
+const GIB = 1073741824;
+
+function fmtGiB(bytes) {
+  if (!bytes && bytes !== 0) return '—';
+  return (bytes / GIB).toFixed(2) + ' GiB';
+}
+
+function getRemaining(resetDay) {
+  if (!resetDay || resetDay === 0) return '<span style="color:var(--muted)">不重置</span>';
+  const now = new Date();
+  const today = now.getDate();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const rd = Math.min(resetDay, daysInMonth);
+  let remaining;
+  if (today <= rd) {
+    remaining = rd - today;
+  } else {
+    remaining = (daysInMonth - today) + rd;
+  }
+  if (remaining === 0) return '<span style="color:var(--red)">今日重置</span>';
+  return remaining + ' 天';
+}
+
+async function showTrafficEdit(nodeId) {
+  const t = trafficData.find(td => td.node_id === nodeId) || {};
+  document.getElementById('trafficEditNodeId').value = nodeId;
+  const f = document.getElementById('trafficEditForm');
+  f.period_limit_rx.value = t.period_limit_rx ? (t.period_limit_rx / GIB).toFixed(2) : '0.00';
+  f.period_limit_tx.value = t.period_limit_tx ? (t.period_limit_tx / GIB).toFixed(2) : '0.00';
+  f.period_rx_gib.placeholder = '目前: ' + fmtGiB(t.period_rx_bytes);
+  f.period_tx_gib.placeholder = '目前: ' + fmtGiB(t.period_tx_bytes);
+  f.period_rx_gib.value = '';
+  f.period_tx_gib.value = '';
+  f.reset_day.value = t.reset_day || 0;
+  document.getElementById('trafficEditModal').classList.add('active');
+}
+
+document.getElementById('trafficEditForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = {};
+  if (fd.get('period_limit_rx') !== '') body.period_limit_rx = Math.round(parseFloat(fd.get('period_limit_rx')) * GIB);
+  if (fd.get('period_limit_tx') !== '') body.period_limit_tx = Math.round(parseFloat(fd.get('period_limit_tx')) * GIB);
+  const rxGib = fd.get('period_rx_gib');
+  const txGib = fd.get('period_tx_gib');
+  if (rxGib !== '') body.period_rx_bytes = Math.round(parseFloat(rxGib) * GIB);
+  if (txGib !== '') body.period_tx_bytes = Math.round(parseFloat(txGib) * GIB);
+  if (fd.get('reset_day') !== '') body.reset_day = parseInt(fd.get('reset_day'));
+  try {
+    const res = await api('/api/traffic/config/' + fd.get('node_id'), {method: 'PUT', body: JSON.stringify(body)});
+    if (!res.ok) throw new Error('儲存失敗');
+  } catch(e) {
+    alert('儲存失敗: ' + e.message);
+    return;
+  }
+  closeModal('trafficEditModal');
+  await fetchTraffic();
+  render();
+});
+
+async function testTcping(fwdId) {
+  const modal = document.getElementById('tcpingModal');
+  const resultEl = document.getElementById('tcpingResult');
+  const titleEl = document.getElementById('tcpingTitle');
+  modal.classList.add('active');
+  resultEl.textContent = '測試中…';
+  titleEl.textContent = 'TCP Ping — ' + fwdId;
+  resultEl.style.color = 'var(--green)';
+  try {
+    const res = await api('/api/forwards/' + fwdId + '/tcping', {method: 'POST'});
+    if (res.result && res.result.stdout) {
+      resultEl.textContent = res.result.stdout;
+    } else if (res.result && res.result.error) {
+      resultEl.textContent = '錯誤: ' + res.result.error;
+      resultEl.style.color = 'var(--red)';
+    } else {
+      resultEl.textContent = JSON.stringify(res, null, 2);
+    }
+  } catch(e) {
+    resultEl.textContent = '請求失敗: ' + e.message;
+    resultEl.style.color = 'var(--red)';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 編輯 (Nodes / Forwards / SS)
+// ══════════════════════════════════════════════════════════════════
+let editingId = null;
+let editingTunnelId = null;
+
+// ── 節點編輯 ──
+async function editNode(nodeId) {
+  const n = nodes.find(nd => nd.id === nodeId);
+  if (!n) return;
+  editingId = nodeId;
+  document.querySelector('#addNodeModal h2').textContent = '編輯節點';
+  document.querySelector('#addNodeModal .btn-primary').textContent = '儲存修改';
+  const f = document.getElementById('addNodeForm');
+  f.name.value = n.name || '';
+  f.type.value = n.type || 'transit';
+  f.host.value = n.host || '';
+  f.entry_ip.value = n.entry_ip || '';
+  f.port_start.value = n.port_start || '';
+  f.port_end.value = n.port_end || '';
+  f.ssh_port.value = n.ssh_port || 22;
+  f.ssh_user.value = n.ssh_user || 'root';
+  f.ssh_password.value = '';
+  f.ssh_password.placeholder = '留空不修改';
+  document.getElementById('addNodeModal').classList.add('active');
+}
+
+const origNodeSubmit = document.getElementById('addNodeForm').onsubmit;
+document.getElementById('addNodeForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd);
+  if (!data.ssh_password) delete data.ssh_password;
+  try {
+  if (editingId) {
+    await api('/api/nodes/' + editingId, {method: 'PUT', body: JSON.stringify(data)});
+    editingId = null;
+  } else {
+    await api('/api/nodes', {method: 'POST', body: JSON.stringify(data)});
+  }
+  } catch(err) {
+    alert('儲存失敗：' + err.message);
+  } finally {
+    closeModal('addNodeModal');
+  }
+  await fetchNodes();
+  render();
+});
+
+// ── 轉發編輯 ──
+function editForward(fwdId) {
+  const f = forwards.find(fw => fw.id === fwdId);
+  if (!f) return;
+  editingId = fwdId;
+  document.querySelector('#addForwardModal h2').textContent = '編輯端口轉發';
+  document.querySelector('#addForwardModal .btn-primary').textContent = '儲存修改';
+  const sel = document.querySelector('#addForwardForm select[name="node_id"]');
+  sel.innerHTML = nodes.filter(n=>n.type!=='landing').map(n=>`<option value="${n.id}" ${n.id===f.node_id?'selected':''}>${n.name}（${typeLabel(n.type)}）</option>`).join('');
+  document.getElementById('exportNode').innerHTML = '<option value="">— 快速選擇目標節點 —</option>' +
+    nodes.filter(n=>n.type!=='entry').map(n=>`<option value="${n.host}:${n.port_start||8443}">${n.name}（${typeLabel(n.type)}）→ ${n.host}:${n.port_start||8443}</option>`).join('');
+  const form = document.getElementById('addForwardForm');
+  form.listen_addr.value = f.listen_addr || '';
+  form.remote_addr.value = f.remote_addr || '';
+  form.tls_mode.value = f.tls_mode || 'none';
+  form.rate_limit.value = f.rate_limit || 0;
+  document.getElementById('addForwardModal').classList.add('active');
+}
+
+// ── 隧道編輯（使用新增面板，刪舊鏈路 → 重建） ──
+function editTunnel(tid) {
+  const tunnelFwds = forwards.filter(f=>f.tunnel_id===tid);
+  if (tunnelFwds.length < 2) return;
+  const fwd1 = tunnelFwds.find(f=>nodes.find(n=>n.id===f.node_id)?.type==='entry') || tunnelFwds[0];
+  const fwd2 = tunnelFwds.find(f=>f.id!==fwd1.id) || {};
+  editingTunnelId = tid;
+
+  document.querySelector('#addTunnelModal h2').textContent = '編輯隧道轉發';
+  document.querySelector('#addTunnelForm .btn-primary').textContent = '重建隧道';
+
+  const entrySel = document.querySelector('#addTunnelForm [name="entry_node_id"]');
+  entrySel.innerHTML = nodes.filter(n=>n.type==='entry').map(n=>`<option value="${n.id}" ${n.id===fwd1.node_id?'selected':''}>${n.name}</option>`).join('');
+
+  const exitSel = document.querySelector('#addTunnelForm [name="exit_node_id"]');
+  exitSel.innerHTML = nodes.filter(n=>n.type==='transit').map(n=>`<option value="${n.id}" ${n.id===fwd2.node_id?'selected':''}>${n.name}（${n.host}）</option>`).join('');
+
+  const form = document.getElementById('addTunnelForm');
+  form.listen_port.value = fwd1.listen_addr.split(':').pop() || '';
+  form.tls_mode.value = fwd1.tls_mode || 'tls';
+  form.tunnel_port.value = fwd2.listen_addr ? fwd2.listen_addr.split(':').pop() : '';
+  form.landing_addr.value = fwd2.remote_addr || '';
+  form.rate_limit.value = fwd1.rate_limit || 0;
+
+  document.getElementById('addTunnelModal').classList.add('active');
+}
+
+document.getElementById('addForwardForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = Object.fromEntries(fd);
+  try {
+    if (editingId) {
+      await api('/api/forwards/' + editingId, {method: 'DELETE'});
+      editingId = null;
+    }
+    await api('/api/forwards', {method: 'POST', body: JSON.stringify(data)});
+  } catch(err) {
+    alert('儲存失敗：' + err.message);
+  } finally {
+    closeModal('addForwardModal');
+  }
+  await fetchForwards();
+  render();
+});
+
+// ══════════════════════════════════════════════════════════════════
+// 部署
+// ══════════════════════════════════════════════════════════════════
+function openDeploy(nodeId, name) {
+  deployNodeId = nodeId;
+  document.getElementById('deployNodeName').textContent = `部署 Agent 至：${name}`;
+  document.getElementById('deployLog').textContent = '';
+  document.getElementById('deployModal').classList.add('active');
+}
+async function startDeploy() {
+  if(!deployNodeId) return;
+  const logEl = document.getElementById('deployLog');
+  logEl.textContent = '開始部署…\n';
+  try {
+    await api(`/api/nodes/${deployNodeId}/deploy`, {method:'POST'});
+    deploySource = new EventSource(`/api/nodes/${deployNodeId}/deploy/log`);
+    deploySource.onmessage = (e) => {
+      const d = JSON.parse(e.data);
+      if(d.type === 'log') logEl.textContent += d.msg + '\n';
+      else if(d.type === 'success') { logEl.textContent += '✓ 部署完成！\n'; deploySource.close(); fetchNodes().then(() => render()); }
+      else if(d.type === 'error') { logEl.textContent += '✗ ' + d.msg + '\n'; deploySource.close(); }
+      logEl.scrollTop = logEl.scrollHeight;
+    };
+  } catch(err) {
+    logEl.textContent += '錯誤：' + err.message + '\n';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 工具函式
+// ══════════════════════════════════════════════════════════════════
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+  if(deploySource) { deploySource.close(); deploySource = null; }
+}
+function copySS(url) {
+  navigator.clipboard.writeText(url).then(()=>alert('代理連結已複製！'));
+}
+function copyInstallCmd(nodeId) {
+  const base = window.location.origin;
+  const node = nodes.find(n => n.id === nodeId);
+  const nodeType = node ? node.type : '';
+  const cmd = `curl -s ${base}/agent/install.sh | bash -s -- ${base} ${nodeId} 78a51258ba439978f91e744999e7daf3 ${nodeType}`;
+  navigator.clipboard.writeText(cmd).then(()=>alert('安裝指令已複製！\\nSSH 到節點後貼上執行即可'));
+}
+function fmtBytes(b) {
+  if(!b || b===0) return '0 B';
+  const u = ['B','KB','MB','GB','TB'];
+  const i = Math.floor(Math.log(b)/Math.log(1024));
+  return (b/Math.pow(1024,i)).toFixed(1)+' '+u[i];
+}
+function fmtSpeed(b) { return fmtBytes(b)+'/s'; }
+
+// ══════════════════════════════════════════════════════════════════
+// 分頁切換
+// ══════════════════════════════════════════════════════════════════
+document.querySelectorAll('nav a').forEach(a=>{
+  a.addEventListener('click', e=>{
+    e.preventDefault();
+    document.querySelectorAll('nav a').forEach(x=>x.classList.remove('active'));
+    a.classList.add('active');
+    currentTab = a.dataset.tab;
+    selectedItems.clear();
+    batchMode = false;
+    render();
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════
+// 自動刷新 & 背景輪換（modal 開啟時跳過刷新，避免干擾操作）
+// ══════════════════════════════════════════════════════════════════
+setInterval(async () => {
+  if (!getToken()) return;
+  if (document.querySelector('.modal.active')) return;  // modal 開啟中不刷新
+  await fetchAllData();
+  render();
+}, 15000);
+setInterval(()=>{
+  const bg = getBgUrl().replace('loliapi.com/acg/', `loliapi.com/acg/?t=${Date.now()}`);
+  // Only add timestamp if using default ACG (not custom)
+  const custom = localStorage.getItem('realm-bg-url');
+  const finalBg = custom ? getBgUrl() : bg;
+  document.body.style.setProperty('background-image', finalBg);
+  // Also update ::before
+  const sheet = document.getElementById('bg-override');
+  if (sheet) { sheet.textContent = `body::before{background:${finalBg}}`; }
+}, 60000);
+
+// ══════════════════════════════════════════════════════════════════
+// 訂閱管理
+// ══════════════════════════════════════════════════════════════════
+let editingSubId = null;
+
+function renderSub() {
+  let h = `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <h2>訂閱配置</h2>
+    <button class="btn btn-primary" onclick="showAddSub()">＋ 新增配置</button>
+  </div>`;
+
+  if (!subConfigs.length) {
+    h += '<div style="text-align:center;padding:60px 20px;color:var(--muted)"><p style="font-size:48px;margin-bottom:12px">📡</p><p>尚無訂閱配置，點擊上方按鈕建立第一個</p></div>';
+  } else {
+    h += '<table><thead><tr><th>名稱</th><th>輸出格式</th><th>來源數</th><th>規則數</th><th>入口替換</th><th>訂閱連結</th><th>操作</th></tr></thead><tbody>';
+    for (const s of subConfigs) {
+      const nodeCount = (s.node_sources||[]).length;
+      const ruleCount = (s.rule_sources||[]).length;
+      const subUrl = `${location.origin}/api/sub/${s.id}?token=${s.access_token}`;
+      h += `<tr>
+        <td style="white-space:nowrap"><strong>${s.name}</strong></td>
+        <td style="white-space:nowrap"><span class="badge badge-online">${s.output_format||'clash'}</span></td>
+        <td style="white-space:nowrap">${nodeCount} 個</td>
+        <td style="white-space:nowrap">${ruleCount} 個</td>
+        <td style="white-space:nowrap">${s.replace_server_enabled && s.replace_server ? '<span style="color:var(--accent)">'+s.replace_server+'</span>' : '—'}</td>
+        <td style="white-space:nowrap"><code style="font-size:11px">${subUrl.substring(0,50)}…</code> <button class="copy-btn" onclick="copyText('${subUrl}')">複製</button></td>
+        <td style="white-space:nowrap"><button class="btn btn-ghost btn-sm" onclick="editSub('${s.id}')">編輯</button> <button class="btn btn-danger btn-sm" onclick="delSub('${s.id}')">刪除</button></td>
+      </tr>`;
+    }
+    h += '</tbody></table>';
+  }
+  document.getElementById('app').innerHTML = h;
+}
+
+function showAddSub() {
+  editingSubId = null;
+  document.getElementById('subModalTitle').textContent = '新增訂閱配置';
+  document.getElementById('subFormSubmit').textContent = '建立配置';
+  document.getElementById('subForm').reset();
+  document.getElementById('subModal').classList.add('active');
+}
+
+function editSub(id) {
+  const s = subConfigs.find(c=>c.id===id);
+  if (!s) return;
+  editingSubId = id;
+  document.getElementById('subModalTitle').textContent = '編輯訂閱配置';
+  document.getElementById('subFormSubmit').textContent = '儲存修改';
+  const form = document.getElementById('subForm');
+  form.name.value = s.name || '';
+  form.node_sources_text.value = (s.node_sources||[]).map(u=>u.url||u).join('\n');
+  form.rule_sources_text.value = (s.rule_sources||[]).map(u=>u.url||u).join('\n');
+  form.output_format.value = s.output_format || 'clash';
+  form.replace_server_enabled.checked = s.replace_server_enabled ? true : false;
+  form.replace_server.value = s.replace_server || '';
+  if (s.replace_server_enabled) {
+    document.getElementById('replaceServerInput').style.display = 'block';
+  } else {
+    document.getElementById('replaceServerInput').style.display = 'none';
+  }
+  form.filter_regex.value = s.filter_regex || '';
+  document.getElementById('subModal').classList.add('active');
+}
+
+async function delSub(id) {
+  if (!confirm('確定要刪除此訂閱配置？')) return;
+  await api('/api/sub/configs/' + id, {method:'DELETE'});
+  subConfigs = await api('/api/sub/configs');
+  render();
+}
+
+document.getElementById('subForm').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const data = {
+    name: fd.get('name'),
+    node_sources: fd.get('node_sources_text').split('\n').map(u=>u.trim()).filter(Boolean).map(u=>u.startsWith('http://')||u.startsWith('https://')?{url:u}:{text:u}),
+    rule_sources: fd.get('rule_sources_text').split('\n').map(u=>u.trim()).filter(Boolean).map(u=>({url:u})),
+    output_format: fd.get('output_format'),
+    replace_server_enabled: fd.get('replace_server_enabled') ? 1 : 0,
+    replace_server: fd.get('replace_server') || '',
+    filter_regex: fd.get('filter_regex'),
+  };
+  try {
+    if (editingSubId) {
+      await api('/api/sub/configs/' + editingSubId, {method:'PUT', body: JSON.stringify(data)});
+    } else {
+      await api('/api/sub/configs', {method:'POST', body: JSON.stringify(data)});
+    }
+    editingSubId = null;
+  } catch(err) {
+    alert('儲存失敗：' + err.message);
+  } finally {
+    closeModal('subModal');
+  }
+  subConfigs = await api('/api/sub/configs');
+  render();
+});
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(()=>{}).catch(()=>prompt('手動複製：', text));
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// 導覽列權限控制
+// ══════════════════════════════════════════════════════════════════
+function updateNavVisibility() {
+  const isAdmin = currentUser && currentUser.role === 'admin';
+  const groupsLink = document.querySelector('nav a[data-tab="groups"]');
+  if (isAdmin) {
+    if (!groupsLink) {
+      const nav = document.querySelector('header nav');
+      const subLink = nav.querySelector('a[data-tab="sub"]');
+      const a = document.createElement('a');
+      a.dataset.tab = 'groups';
+      a.textContent = '分組';
+      subLink.after(a);
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
+        a.classList.add('active');
+        currentTab = a.dataset.tab;
+        render();
+      });
+    }
+  } else {
+    for (const tab of ['users', 'groups']) {
+      const link = document.querySelector('nav a[data-tab="' + tab + '"]');
+      if (link) link.style.display = 'none';
+    }
+    const gear = document.getElementById('gearBtn');
+    if (gear) gear.style.display = 'none';
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 分組管理
+// ══════════════════════════════════════════════════════════════════
+async function renderGroups() {
+  let h = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><h2>分組管理</h2><button class="btn btn-primary" onclick="showAddGroup()">＋ 新增分組</button></div>';
+  if (!groups.length) {
+    h += '<div style="text-align:center;padding:60px 20px;color:var(--muted)"><p style="font-size:48px;margin-bottom:12px">📂</p><p>尚無自訂分組</p></div>';
+  } else {
+    h += '<div class="group-section">';
+    for (const g of groups) {
+      const isDefault = g.id === 'default';
+      h += '<div class="group-card"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h4>' + g.name + (isDefault ? ' <span style="font-size:11px;color:var(--muted)">（預設）</span>' : '') + '</h4><p>' + (g.description || '—') + '</p>' + ((g.port_start && g.port_end) ? '<p style="font-size:12px;color:var(--accent)">🔒 埠段：' + g.port_start + ' – ' + g.port_end + '</p>' : '') + '</div><div style="display:flex;gap:6px">' + (isDefault ? '' : '<button class="btn btn-ghost btn-sm" onclick="editGroup(\'' + g.id + '\')">編輯</button><button class="btn btn-danger btn-sm" onclick="delGroup(\'' + g.id + '\')">刪除</button>') + '</div></div><div class="group-meta"><span onclick="toggleGroupDetail(\'nodes\',\'' + g.id + '\')" style="cursor:pointer">🔗 節點</span><span onclick="toggleGroupDetail(\'inbounds\',\'' + g.id + '\')" style="cursor:pointer">🛡 入站</span><span onclick="toggleGroupDetail(\'users\',\'' + g.id + '\')" style="cursor:pointer">👤 用戶</span></div><div id="groupDetail-' + g.id + '" style="display:none"></div></div>';
+    }
+    h += '</div>';
+  }
+  document.getElementById('app').innerHTML = h;
+}
+
+async function toggleGroupDetail(type, groupId) {
+  const el = document.getElementById('groupDetail-' + groupId);
+  if (el.style.display !== 'none') { el.style.display = 'none'; return; }
+  el.innerHTML = '<div style="padding:12px;color:var(--muted)">載入中…</div>';
+  el.style.display = 'block';
+  if (type === 'nodes') {
+    const groupNodes = await api('/api/groups/' + groupId + '/nodes');
+    const memberIds = new Set(groupNodes.map(n => n.id));
+    const limits = await api('/api/groups/' + groupId + '/node-limits');
+    let h = '<table><thead><tr><th>選取</th><th>名稱</th><th>類型</th><th>主機</th><th>限速 (Kbps)</th><th>在群組</th></tr></thead><tbody>';
+    for (const n of nodes) {
+      const limitKbps = limits[n.id] || 0;
+      h += '<tr><td><input type="checkbox" class="batch-check" ' + (memberIds.has(n.id) ? 'checked' : '') + ' onchange="toggleGroupItem(\'nodes\',\'' + groupId + '\',\'' + n.id + '\',this.checked)"></td><td>' + n.name + '</td><td>' + typeLabel(n.type) + '</td><td>' + n.host + '</td>';
+      h += '<td><input type="number" value="' + limitKbps + '" placeholder="不限速" min="0" style="width:100px;margin:0;padding:6px 10px;font-size:13px" onchange="setGroupNodeLimit(\'' + groupId + '\',\'' + n.id + '\',this.value)"></td>';
+      h += '<td>' + (memberIds.has(n.id) ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>') + '</td></tr>';
+    }
+    h += '</tbody></table>';
+    // Port range section
+    const pr = await api('/api/groups/' + groupId + '/port-range');
+    h += '<div style="margin-top:12px;padding:12px;background:rgba(var(--card-rgb),0.3);border-radius:8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+      '<span style="font-weight:600;font-size:13px">🔒 埠段限制：</span>' +
+      '<input type="number" id="prStart-' + groupId + '" value="' + (pr.port_start||0) + '" placeholder="起始埠" min="1" max="65535" style="width:100px;margin:0;padding:6px 10px;font-size:13px">' +
+      '<span>–</span>' +
+      '<input type="number" id="prEnd-' + groupId + '" value="' + (pr.port_end||0) + '" placeholder="結束埠" min="1" max="65535" style="width:100px;margin:0;padding:6px 10px;font-size:13px">' +
+      '<button class="btn btn-primary btn-sm" onclick="setPortRange(\'' + groupId + '\')">儲存</button>' +
+      '<span style="font-size:11px;color:var(--muted)">（0=不限制，僅影響轉發規則的埠號）</span>' +
+      '</div>';
+    el.innerHTML = h;
+  } else if (type === 'inbounds') {
+    const groupInbounds = await api('/api/groups/' + groupId + '/inbounds');
+    const memberIds = new Set(groupInbounds.map(i => i.id));
+    let h = '<table><thead><tr><th>選取</th><th>埠號</th><th>協定</th><th>標籤</th><th>在群組</th></tr></thead><tbody>';
+    for (const ib of inbounds) {
+      h += '<tr><td><input type="checkbox" class="batch-check" ' + (memberIds.has(ib.id) ? 'checked' : '') + ' onchange="toggleGroupItem(\'inbounds\',\'' + groupId + '\',\'' + ib.id + '\',this.checked)"></td><td>' + ib.port + '</td><td>' + ib.protocol + '</td><td>' + (ib.tag || '') + '</td><td>' + (memberIds.has(ib.id) ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>') + '</td></tr>';
+    }
+    h += '</tbody></table>';
+    el.innerHTML = h;
+  } else if (type === 'users') {
+    const groupUsers = await api('/api/groups/' + groupId + '/users');
+    const memberIds = new Set(groupUsers.map(u => u.id));
+    let h = '<table><thead><tr><th>選取</th><th>名稱</th><th>角色</th><th>在群組</th></tr></thead><tbody>';
+    for (const u of users) {
+      h += '<tr><td><input type="checkbox" class="batch-check" ' + (memberIds.has(u.id) ? 'checked' : '') + ' onchange="toggleGroupUser(' + groupId + ',' + u.id + ',this.checked)"></td><td>' + u.username + '</td><td>' + u.role + '</td><td>' + (memberIds.has(u.id) ? '<span style="color:var(--green)">✓</span>' : '<span style="color:var(--red)">✗</span>') + '</td></tr>';
+    }
+    h += '</tbody></table>';
+    el.innerHTML = h;
+  }
+}
+
+async function toggleGroupItem(type, groupId, itemId, add) {
+  const url = '/api/groups/' + groupId + '/' + type;
+  await api(url, {method: add ? 'POST' : 'DELETE', body: JSON.stringify({ids: [itemId]})});
+}
+
+async function setGroupNodeLimit(groupId, nodeId, kbps) {
+  const val = parseInt(kbps) || 0;
+  await api('/api/groups/' + groupId + '/node-limits', {
+    method: 'PUT',
+    body: JSON.stringify({node_id: nodeId, rate_limit_kbps: val})
+  });
+}
+
+async function setPortRange(groupId) {
+  const ps = parseInt(document.getElementById('prStart-' + groupId).value) || 0;
+  const pe = parseInt(document.getElementById('prEnd-' + groupId).value) || 0;
+  await api('/api/groups/' + groupId + '/port-range', {
+    method: 'PUT',
+    body: JSON.stringify({port_start: ps, port_end: pe})
+  });
+  groups = await api('/api/groups');
+  render();
+}
+
+async function toggleGroupUser(groupId, userId, add) {
+  const currentUsers = await api('/api/groups/' + groupId + '/users');
+  let userIds = currentUsers.map(u => u.id);
+  if (add) { userIds.push(userId); } else { userIds = userIds.filter(function(id) { return id !== userId; }); }
+  await api('/api/groups/' + groupId + '/users', {method: 'PUT', body: JSON.stringify({user_ids: userIds})});
+}
+
+async function quickAddGroup() {
+  const name = prompt('新分組名稱：');
+  if (!name) return;
+  const desc = prompt('分組描述（可留空）：') || '';
+  await api('/api/groups', {method: 'POST', body: JSON.stringify({name: name, description: desc})});
+  groups = await api('/api/groups');
+  render();
+}
+
+function showAddGroup() {
+  const name = prompt('分組名稱：');
+  if (!name) return;
+  const desc = prompt('分組描述（可留空）：') || '';
+  api('/api/groups', {method: 'POST', body: JSON.stringify({name: name, description: desc})}).then(async function() {
+    groups = await api('/api/groups');
+    render();
+  });
+}
+
+function editGroup(id) {
+  const g = groups.find(function(x) { return x.id === id; });
+  if (!g) return;
+  const name = prompt('分組名稱：', g.name);
+  if (!name) return;
+  const desc = prompt('分組描述：', g.description || '') || '';
+  api('/api/groups/' + id, {method: 'PUT', body: JSON.stringify({name: name, description: desc})}).then(async function() {
+    groups = await api('/api/groups');
+    render();
+  });
+}
+
+async function delGroup(id) {
+  if (!confirm('確定要刪除此分組？')) return;
+  await api('/api/groups/' + id, {method: 'DELETE'});
+  groups = await api('/api/groups');
+  render();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 批量模式
+// ══════════════════════════════════════════════════════════════════
+function toggleBatchMode() {
+  batchMode = !batchMode;
+  if (!batchMode) selectedItems.clear();
+  render();
+}
+
+function toggleSelect(id) {
+  if (selectedItems.has(id)) selectedItems.delete(id);
+  else selectedItems.add(id);
+}
+
+function selectAll(items, checked) {
+  if (checked) items.forEach(function(i) { selectedItems.add(i); });
+  else items.forEach(function(i) { selectedItems.delete(i); });
+  render();
+}
+
+function getSelectedIds() {
+  return Array.from(selectedItems);
+}
+
+async function batchDelete(type) {
+  let ids = getSelectedIds();
+  if (!ids.length) return alert('未選取任何項目');
+  if (!confirm('確定要批量刪除 ' + ids.length + ' 個項目？')) return;
+  // Tunnel mode: map tunnel_ids → actual forward IDs
+  if (type === 'forwards' && fwdTab === 'tunnel') {
+    const tunnelIds = new Set(ids);
+    ids = forwards.filter(f => f.forward_type === 'tunnel' && tunnelIds.has(f.tunnel_id || f.id)).map(f => f.id);
+    if (!ids.length) return alert('找不到對應的轉發記錄');
+    if (!confirm('將刪除 ' + ids.length + ' 條轉發規則，確定？')) return;
+  }
+  const urlMap = {nodes: '/api/nodes/batch/delete', forwards: '/api/forwards/batch/delete', inbounds: '/api/inbounds/batch/delete'};
+  try {
+    await api(urlMap[type], {method: 'POST', body: JSON.stringify({ids: ids})});
+  } catch(err) {
+    alert('批量刪除失敗：' + err.message);
+  }
+  selectedItems.clear();
+  batchMode = false;
+  try { await fetchAllData(); } catch(e) {}
+  render();
+}
+
+async function batchGroupOp(type, action) {
+  const ids = getSelectedIds();
+  if (!ids.length) return alert('未選取任何項目');
+  const sel = document.getElementById('batchGroupSelect');
+  const groupId = sel ? sel.value : '';
+  if (!groupId) return alert('請選擇分組');
+  const urlMap = {nodes: '/api/nodes/batch/group', inbounds: '/api/inbounds/batch/group'};
+  try {
+    await api(urlMap[type], {method: 'POST', body: JSON.stringify({ids: ids, group_id: groupId, action: action})});
+  } catch(err) {
+    alert('操作失敗：' + err.message);
+  }
+  selectedItems.clear();
+  batchMode = false;
+  try { await fetchAllData(); } catch(e) {}
+  render();
+}
+
+async function batchReplaceEntry() {
+  let ids = getSelectedIds();
+  if (!ids.length) return alert('未選取任何隧道轉發');
+  // Tunnel mode: map tunnel_ids → actual forward IDs
+  if (fwdTab === 'tunnel') {
+    const tunnelIds = new Set(ids);
+    ids = forwards.filter(f => f.forward_type === 'tunnel' && tunnelIds.has(f.tunnel_id || f.id)).map(f => f.id);
+    if (!ids.length) return alert('找不到對應的轉發記錄');
+  }
+  const sel = document.getElementById('batchReplaceEntrySelect');
+  const newEntry = sel ? sel.value : '';
+  if (!newEntry) return alert('請選擇新入口節點');
+  try {
+    await api('/api/forwards/batch/replace-entry', {method: 'POST', body: JSON.stringify({ids: ids, new_entry_node_id: newEntry})});
+  } catch(err) {
+    alert('操作失敗：' + err.message);
+  }
+  selectedItems.clear();
+  batchMode = false;
+  try { await fetchAllData(); } catch(e) {}
+  render();
+}
+
+async function batchReplaceExit() {
+  let ids = getSelectedIds();
+  if (!ids.length) return alert('未選取任何隧道轉發');
+  // Tunnel mode: map tunnel_ids → actual forward IDs
+  if (fwdTab === 'tunnel') {
+    const tunnelIds = new Set(ids);
+    ids = forwards.filter(f => f.forward_type === 'tunnel' && tunnelIds.has(f.tunnel_id || f.id)).map(f => f.id);
+    if (!ids.length) return alert('找不到對應的轉發記錄');
+  }
+  const sel = document.getElementById('batchReplaceExitSelect');
+  const newExit = sel ? sel.value : '';
+  if (!newExit) return alert('請選擇新出口節點');
+  try {
+    await api('/api/forwards/batch/replace-exit', {method: 'POST', body: JSON.stringify({ids: ids, new_exit_node_id: newExit})});
+  } catch(err) {
+    alert('操作失敗：' + err.message);
+  }
+  selectedItems.clear();
+  batchMode = false;
+  try { await fetchAllData(); } catch(e) {}
+  render();
+}
+
+
+function getPortForwardIds() {
+  return forwards.filter(function(f) { return !f.forward_type || f.forward_type === 'port'; }).map(function(f) { return f.id; });
+}
+function getTunnelIds() {
+  var t = {};
+  forwards.filter(function(f) { return f.forward_type === 'tunnel'; }).forEach(function(f) { t[f.tunnel_id || f.id] = 1; });
+  return Object.keys(t);
+}
+
+function batchToolbar(type, items) {
+  const count = getSelectedIds().length;
+  var h = '<div class="batch-toolbar active" id="batchToolbar"><span>已選取 ' + count + ' 項</span>';
+  if (type === 'nodes' || type === 'inbounds') {
+    h += '<button class="btn btn-ghost btn-sm" onclick="quickAddGroup()" style="white-space:nowrap">＋ 新分組</button>';
+        h += '<select id="batchGroupSelect" style="margin-bottom:0;width:auto">';
+    for (var i = 0; i < groups.length; i++) {
+      h += '<option value="' + groups[i].id + '">' + groups[i].name + '</option>';
+    }
+    h += '</select><button class="btn btn-primary btn-sm" onclick="batchGroupOp(\'' + type + '\',\'add\')">加入分組</button><button class="btn btn-ghost btn-sm" onclick="batchGroupOp(\'' + type + '\',\'remove\')">移出分組</button>';
+  }
+  if (type === 'forwards') {
+    var entryNodes = nodes.filter(function(n) { return n.type === 'entry'; });
+    var transitNodes = nodes.filter(function(n) { return n.type === 'transit'; });
+    if (entryNodes.length) {
+      h += '<select id="batchReplaceEntrySelect" style="margin-bottom:0;width:auto">';
+      for (var j = 0; j < entryNodes.length; j++) h += '<option value="' + entryNodes[j].id + '">' + entryNodes[j].name + '</option>';
+      h += '</select><button class="btn btn-primary btn-sm" onclick="batchReplaceEntry()">替換入口</button>';
+    }
+    if (transitNodes.length) {
+      h += '<select id="batchReplaceExitSelect" style="margin-bottom:0;width:auto">';
+      for (var k = 0; k < transitNodes.length; k++) h += '<option value="' + transitNodes[k].id + '">' + transitNodes[k].name + '</option>';
+      h += '</select><button class="btn btn-primary btn-sm" onclick="batchReplaceExit()">替換出口</button>';
+    }
+  }
+  h += '<button class="btn btn-danger btn-sm" onclick="batchDelete(\'' + type + '\')">批量刪除</button><button class="btn btn-ghost btn-sm" onclick="toggleBatchMode()">取消</button></div>';
+  return h;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// 啟動
+// ══════════════════════════════════════════════════════════════════
+
+if (getToken()) {
+  initApp();
+} else {
+  showLogin();
+}
+</script>
+</body>
+</html>

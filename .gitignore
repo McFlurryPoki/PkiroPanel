@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+
+# Database
+data/*.db
+data/*.db-*
+
+# Agent binaries (too large, download via install script)
+agent/bin/*.tar.gz
+agent/bin/*.tar.xz
+agent/bin/gost-*
+agent/bin/realm-*
+agent/bin/ssrust-*
+agent/agent/bin/*.tar.gz
+agent/agent/bin/*.tar.xz
+agent/agent/bin/gost-*
+agent/agent/bin/realm-*
+agent/agent/bin/ssrust-*
+
+# Docker
+docker/data/
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
