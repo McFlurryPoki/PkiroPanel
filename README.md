@@ -2,20 +2,20 @@
 
 基於 [gost](https://github.com/go-gost/gost)、[WireGuard](https://www.wireguard.com/)、[sing-box](https://github.com/SagiNet/sing-box) 等開源項目構建的多協議轉發與多節點管理面板。
 
-## Features
+## 功能特色
 
-- **Multi-node management**: Entry, transit, and landing node orchestration
-- **Tunnel forwarding**: TLS, mTLS, and **WireGuard** tunnel support
-- **Gost integration**: gost v3 (YAML-based) forwarding engine
-- **sing-box support**: Inbound proxy management
-- **Traffic monitoring**: Per-node and per-forward traffic tracking
-- **Subscription converter**: Parse and serve proxy subscriptions
-- **WebSocket agents**: Real-time node status and command dispatch
-- **Responsive UI**: Dark theme, salmon-red accent, optimized for desktop and mobile
+- **多節點管理**：入口、中轉、落地節點統一編排
+- **隧道轉發**：支援 TLS、mTLS 及 **WireGuard** 隧道
+- **Gost 整合**：gost v3（YAML 設定）轉發引擎
+- **sing-box 支援**：入站代理管理
+- **流量監控**：按節點及轉發規則追蹤流量
+- **訂閱轉換器**：解析並提供代理訂閱端點
+- **WebSocket 代理**：即時節點狀態與指令派發
+- **響應式介面**：深色主題、鮭魚紅點綴、桌面及手機端最佳化
 
-## Quick Start
+## 快速開始
 
-### Panel (Docker)
+### 面板端（Docker）
 
 ```bash
 # 1. 解壓
@@ -33,7 +33,7 @@ docker compose up -d
 
 預設登入：`admin` / `admin123`
 
-### Agent（節點端）
+### 代理端（節點）
 
 在每個需要管理的節點上執行：
 
@@ -42,13 +42,13 @@ bash install.sh <PANEL_URL> <NODE_ID>
 # 例：bash install.sh https://panel.example.com node-abc123
 ```
 
-## Updating
+## 版本更新
 
 ```bash
 # 1. 解壓新版
 tar xzf PkiroPanel-vXX.XX.XXXXa.tar.gz
 
-# 2. 覆蓋源碼
+# 2. 覆蓋原始碼
 cp -a PkiroPanel-vXX.XX.XXXXa/panel .
 cp PkiroPanel-vXX.XX.XXXXa/requirements.txt .
 
@@ -56,21 +56,21 @@ cp PkiroPanel-vXX.XX.XXXXa/requirements.txt .
 cd docker && docker compose down && docker compose up -d --build
 ```
 
-## Architecture
+## 架構
 
 ```
-Panel (Docker) ──WebSocket──▶ Agent (on each node)
+面板 (Docker) ──WebSocket──▶ 代理 (各節點)
                                   │
-                                  ├── gost (forwarding engine)
-                                  ├── sing-box (inbound proxy)
-                                  └── WireGuard (tunnel transport)
+                                  ├── gost（轉發引擎）
+                                  ├── sing-box（入站代理）
+                                  └── WireGuard（隧道傳輸）
 ```
 
-## Requirements
+## 環境需求
 
-- **Panel**: Docker + Docker Compose
-- **Agent**: Python 3.8+, Linux with systemd
+- **面板**：Docker + Docker Compose
+- **代理**：Python 3.8+、Linux 且含 systemd
 
-## License
+## 授權條款
 
 MIT
