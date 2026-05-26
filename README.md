@@ -19,8 +19,8 @@
 
 ```bash
 # 1. 解壓
-tar xzf PkiroPanel-v27.05.2026a.tar.gz
-cd PkiroPanel-v27.05.2026a/docker
+tar xzf PkiroPanel-v27.05.2026.tar.gz
+cd PkiroPanel-v27.05.2026/docker
 
 # 2. 修改環境變數（可選）
 nano .env
@@ -42,23 +42,17 @@ bash install.sh <PANEL_URL> <NODE_ID>
 # 例：bash install.sh https://panel.example.com node-abc123
 ```
 
-Agent 會根據面板設定的節點類型自動啟動對應服務：
-
-| 節點類型 | 用途 | 預裝組件 |
-|----------|------|----------|
-| 入口 (Entry) | 接收用戶流量、TLS 解密 | gost＋WireGuard |
-| 中轉 (Transit) | 跨區域轉發、隧道中繼 | gost＋WireGuard |
-| 落地 (Landing) | 出站代理、最終出口 | sing-box |
+Agent 會根據面板設定的節點類型自動派發對應服務（入口/中轉 → gost＋WG、落地 → sing-box）。
 
 ## 版本更新
 
 ```bash
 # 1. 解壓新版
-tar xzf PkiroPanel-vXX.XX.XXXXa.tar.gz
+tar xzf PkiroPanel-vXX.XX.XXXX.tar.gz
 
 # 2. 覆蓋原始碼
-cp -a PkiroPanel-vXX.XX.XXXXa/panel .
-cp PkiroPanel-vXX.XX.XXXXa/requirements.txt .
+cp -a PkiroPanel-vXX.XX.XXXX/panel .
+cp PkiroPanel-vXX.XX.XXXX/requirements.txt .
 
 # 3. 單行重建
 cd docker && docker compose down && docker compose up -d --build
