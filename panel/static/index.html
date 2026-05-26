@@ -2043,7 +2043,7 @@ setInterval(async () => {
   render();
 }, 15000);
 setInterval(()=>{
-  const bg = getBgUrl().replace('loliapi.com/acg/', `loliapi.com/acg/?t=${Date.now()}`);
+  const bg = getBgUrl().replace('api.sretna.cn/api/anime.php', `api.sretna.cn/api/anime.php?t=${Date.now()}`);
   // Only add timestamp if using default ACG (not custom)
   const custom = localStorage.getItem('realm-bg-url');
   const finalBg = custom ? getBgUrl() : bg;
