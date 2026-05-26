@@ -44,9 +44,15 @@ bash install.sh <PANEL_URL> <NODE_ID>
 
 ## Updating
 
-解壓新版源碼覆蓋後，單行重建：
-
 ```bash
+# 1. 解壓新版
+tar xzf PkiroPanel-vXX.XX.XXXXa.tar.gz
+
+# 2. 覆蓋源碼
+cp -a PkiroPanel-vXX.XX.XXXXa/panel .
+cp PkiroPanel-vXX.XX.XXXXa/requirements.txt .
+
+# 3. 單行重建
 cd docker && docker compose down && docker compose up -d --build
 ```
 
