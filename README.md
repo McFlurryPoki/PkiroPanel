@@ -29,9 +29,6 @@ nano .env
 
 # 3. 啟動
 docker compose up -d
-
-# 4. 確認運行
-docker logs realm-panel
 ```
 
 預設登入：`admin` / `admin123`
@@ -47,31 +44,11 @@ bash install.sh <PANEL_URL> <NODE_ID>
 
 ## Updating
 
-更新到新版時，解壓新版源碼後重建 Docker 映像：
+解壓新版源碼覆蓋後，單行重建：
 
 ```bash
-# 1. 備份當前資料庫（重要！）
-cp docker/data/realm_panel.db docker/data/realm_panel.db.bak.$(date +%Y%m%d_%H%M%S)
-
-# 2. 解壓新版並覆蓋 panel/ 目錄
-tar xzf PkiroPanel-vXX.XX.XXXXa.tar.gz
-cp -a PkiroPanel-vXX.XX.XXXXa/panel/ panel/
-cp PkiroPanel-vXX.XX.XXXXa/requirements.txt .
-
-# 3. 停止、重建、啟動
-cd docker
-docker compose down
-docker compose up -d --build
+cd docker && docker compose down && docker compose up -d --build
 ```
-
-> ⚠️ **重建會丟失資料**
-> `docker compose down` 會移除容器。雖然資料庫透過 volume `./data:/data` 掛載保存，但重建過程中仍建議**務必先備份** `docker/data/realm_panel.db`。
->
-> 如需恢復備份：
-> ```bash
-> cp docker/data/realm_panel.db.bak.XXXXXXXX docker/data/realm_panel.db
-> docker compose restart
-> ```
 
 ## Architecture
 
